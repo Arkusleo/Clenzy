@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clenzy | Home Services</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">Clenzy</div>
+        <nav>
+            <a href="#">Home</a>
+            <a href="#">Services</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+            <a href="#" class="login-btn" id="loginBtn">Login</a>
+        </nav>
+    </header>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login to Clenzy</h2>
+            <form>
+                <input type="text" placeholder="Phone/Email" required>
+                <input type="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-text">
+            <h1>Professional Home Services at Your Doorstep</h1>
+            <p>Cleaning, Repairs, Plumbing, Electrical & more – trusted professionals at your convenience.</p>
+            <a href="#services" class="cta-btn">Book Now</a>
+        </div>
+        <div class="hero-image">
+            <img src="{{ url_for('static', filename='images/hero.png') }}" alt="Clenzy Home Services">
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services" id="services">
+        <h2>Our Services</h2>
+        <div class="service-grid">
+            <div class="service-card">
+                <img src="{{ url_for('static', filename='images/cleaning.jpg') }}" alt="Cleaning">
+                <h3>Cleaning</h3>
+                <p>Professional cleaning for your home and office.</p>
+                <a href="#" class="book-btn">Book Now</a>
+            </div>
+            <div class="service-card">
+                <img src="{{ url_for('static', filename='images/plumbing.jpg') }}" alt="Plumbing">
+                <h3>Plumbing</h3>
+                <p>Expert plumbing solutions at your doorstep.</p>
+                <a href="#" class="book-btn">Book Now</a>
+            </div>
+            <div class="service-card">
+                <img src="{{ url_for('static', filename='images/electrician.jpg') }}" alt="Electrician">
+                <h3>Electrician</h3>
+                <p>Quick electrical fixes and installations.</p>
+                <a href="#" class="book-btn">Book Now</a>
+            </div>
+            <div class="service-card">
+                <img src="{{ url_for('static', filename='images/carpentry.jpg') }}" alt="Carpentry">
+                <h3>Carpentry</h3>
+                <p>Skilled carpenters for your furniture needs.</p>
+                <a href="#" class="book-btn">Book Now</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2025 Clenzy. All rights reserved.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
