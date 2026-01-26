@@ -19,7 +19,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:5000/api/auth/admin-login'),
+        Uri.parse(
+            'https://efficient-friendship-production-e8e2.up.railway.app/api/auth/admin-login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': _emailController.text,

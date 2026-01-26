@@ -22,7 +22,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:5000/api/auth/admin-register'),
+        Uri.parse(
+            'https://efficient-friendship-production-e8e2.up.railway.app/api/auth/admin-register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'full_name': _nameController.text,
