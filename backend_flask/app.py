@@ -11,4 +11,5 @@ app.register_blueprint(auth, url_prefix="/api/auth")
 app.register_blueprint(users, url_prefix="/api/users")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
