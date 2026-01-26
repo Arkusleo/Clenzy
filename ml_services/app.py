@@ -31,6 +31,8 @@ def analyze_sentiment():
     score = 0.8 if 'good' in text.lower() or 'great' in text.lower() else 0.3
     return jsonify({"sentiment_score": score})
 
+import os
+
 # Recommended fix for ml_services/app.py
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
