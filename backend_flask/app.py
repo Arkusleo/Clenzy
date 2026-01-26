@@ -4,8 +4,13 @@ from routes.auth_routes import auth
 from routes.user_routes import users
 import os
 
+from flask_jwt_extended import JWTManager
+
 app = Flask(__name__)
 CORS(app)
+
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
+jwt = JWTManager(app)
 
 app.register_blueprint(auth, url_prefix="/api/auth")
 app.register_blueprint(users, url_prefix="/api/users")
