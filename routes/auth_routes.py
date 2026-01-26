@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from backend_flask.core.database import get_connection
+from core.database import get_connection
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 

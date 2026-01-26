@@ -1,26 +1,28 @@
-import sys
+from flask import Flask
+from flask_cors import CORS
+from routes.auth_routes import auth
+from routes.user_routes import users
 import os
 
-# Ensure the project root is in the path
-sys.path.append(os.getcwd())
+from dotenv import load_dotenv
 
-from backend_flask.app import create_app, socketio
+load_dotenv()
 
-# Create the application instance
-app = create_app()
+from flask_jwt_extended import JWTManager
 
-# Automatically create tables for the user 
-with app.app_context():
-    try:
-        from backend_flask.app import db
-        db.create_all()
-        print("✅ Database tables checked/created.")
-    except Exception as e:
-        print(f"⚠️ Note: Database table creation skipped: {e}")
+app = Flask(__name__)
+CORS(app)
+
+@app.route('/')
+def health_check():
+    return "OK", 200
+
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
+jwt = JWTManager(app)
+
+app.register_blueprint(auth, url_prefix="/api/auth")
+app.register_blueprint(users, url_prefix="/api/users")
 
 if __name__ == "__main__":
-    print("--------------------------------------------------")
-    print("🚀 Clenzy Backend ACTIVE on http://localhost:5000")
-    print("--------------------------------------------------")
-    # Disabling reloader for stability on Windows with SocketIO
-    socketio.run(app, debug=True, use_reloader=False, host='0.0.0.0', port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
