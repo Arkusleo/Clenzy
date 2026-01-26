@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: clenzy_db
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ../database_schema/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  backend:
+    build:
+      context: ..
+      dockerfile: backend_flask/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=mysql+mysqlconnector://root:password@db/clenzy_db
+      - JWT_SECRET_KEY=clenzy-super-secret-key
+    depends_on:
+      - db
+
+  ml_service:
+    build:
+      context: ..
+      dockerfile: ml_services/Dockerfile
+    ports:
+      - "5001:5001"
