@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../constants/api_constants.dart';
 import 'dashboard.dart';
 import 'signup_screen.dart';
 
@@ -19,8 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse(
-            'https://efficient-friendship-production-e8e2.up.railway.app/api/auth/admin-login'),
+        Uri.parse(ApiConstants.adminLogin),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': _emailController.text,

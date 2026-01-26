@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../constants/api_constants.dart';
+
 class SignupScreen extends StatefulWidget {
   @override
   _SignupScreenState createState() => _SignupScreenState();
@@ -22,8 +24,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse(
-            'https://efficient-friendship-production-e8e2.up.railway.app/api/auth/admin-register'),
+        Uri.parse(ApiConstants.adminRegister),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'full_name': _nameController.text,
