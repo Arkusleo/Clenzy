@@ -1,0 +1,17 @@
+.git
+.venv
+__pycache__
+*.pyc
+*.log
+.DS_Store
+frontend_customer_flutter
+frontend_employee_flutter
+admin_panel_flutter_web
+backend_flask_backup_*
+clenzy_test.db
+devops_ci_cd
+infra_deployment
+ml_services
+realtime_engine
+security_modules
+docs
