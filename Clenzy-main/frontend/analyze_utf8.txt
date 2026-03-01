@@ -1,0 +1,27 @@
+﻿Analyzing frontend...                                           
+
+   info - The imported package 'geolocator_android' isn't a dependency of the importing package - flutter_build\dart_plugin_registrant.dart:9:8 - depend_on_referenced_packages
+   info - The imported package 'geolocator_apple' isn't a dependency of the importing package - flutter_build\dart_plugin_registrant.dart:10:8 - depend_on_referenced_packages
+   info - The imported package 'geolocator_apple' isn't a dependency of the importing package - flutter_build\dart_plugin_registrant.dart:11:8 - depend_on_referenced_packages
+warning - Duplicate import - flutter_build\dart_plugin_registrant.dart:11:8 - duplicate_import
+   info - Don't invoke 'print' in production code - flutter_build\dart_plugin_registrant.dart:22:9 - avoid_print
+   info - Don't invoke 'print' in production code - flutter_build\dart_plugin_registrant.dart:32:9 - avoid_print
+   info - Don't invoke 'print' in production code - flutter_build\dart_plugin_registrant.dart:43:9 - avoid_print
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\admin\admin_dashboard.dart:162:28 - use_build_context_synchronously
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\screens\admin\admin_users_screen.dart:133:15 - deprecated_member_use
+warning - Unused import: 'package:flutter/foundation.dart' - lib\screens\partner\partner_navigation.dart:2:8 - unused_import
+warning - Unused import: '../../services/firestore_service.dart' - lib\screens\partner\partner_onboarding_screen.dart:3:8 - unused_import
+warning - Unused import: 'package:flutter/foundation.dart' - lib\screens\profile\profile_screen.dart:2:8 - unused_import
+   info - The constant name 'API_URL' isn't a lowerCamelCase identifier - lib\services\auth_service.dart:8:14 - constant_identifier_names
+warning - Unused import: 'package:flutter/foundation.dart' - lib\services\firestore_service.dart:3:8 - unused_import
+   info - The constant name 'API_URL' isn't a lowerCamelCase identifier - lib\services\firestore_service.dart:7:14 - constant_identifier_names
+   info - The constant name 'API_URL' isn't a lowerCamelCase identifier - lib\services\job_service.dart:8:14 - constant_identifier_names
+   info - The constant name 'WS_URL' isn't a lowerCamelCase identifier - lib\services\job_service.dart:9:14 - constant_identifier_names
+warning - The value of the field '_channel' isn't used - lib\services\job_service.dart:13:21 - unused_field
+   info - The constant name 'API_URL' isn't a lowerCamelCase identifier - lib\services\job_service_client.dart:8:14 - constant_identifier_names
+   info - The constant name 'WS_URL' isn't a lowerCamelCase identifier - lib\services\job_service_client.dart:9:14 - constant_identifier_names
+warning - The value of the local variable 'decoded' isn't used - lib\services\job_service_client.dart:37:13 - unused_local_variable
+   info - The constant name 'WS_URL' isn't a lowerCamelCase identifier - lib\services\location_service.dart:8:14 - constant_identifier_names
+   info - The constant name 'API_URL' isn't a lowerCamelCase identifier - lib\services\location_service.dart:9:14 - constant_identifier_names
+   info - The constant name 'API_URL' isn't a lowerCamelCase identifier - lib\services\wallet_service.dart:7:14 - constant_identifier_names
+
