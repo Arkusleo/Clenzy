@@ -1,7 +1,7 @@
-﻿from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import user, worker, admin, booking, ws, wallet
+from app.routes import user, worker, admin, booking, ws, wallet, payment
 from app.database import engine
 from app.models import Base
 
@@ -42,6 +42,7 @@ app.include_router(booking.router, prefix="/api/bookings", tags=["Bookings"])
 app.include_router(wallet.router, prefix="/api/wallet", tags=["Wallet"])
 app.include_router(ws.router, prefix="/api", tags=["WebSockets"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(payment.router, prefix="/api/payment", tags=["Payment"])
 
 @app.get("/")
 def root():

@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // Adjust this depending on emulator or physical device testing
 // Android emulator uses 10.0.2.2. Web/iOS uses 127.0.0.1
-const String API_URL = 'http://127.0.0.1:8000/api';
+const String apiUrl = 'http://127.0.0.1:8000/api';
 
 class User {
   final int id;
@@ -60,7 +60,7 @@ class AuthService extends ChangeNotifier {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$API_URL/users/signup'),
+        Uri.parse('$apiUrl/users/signup'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -92,7 +92,7 @@ class AuthService extends ChangeNotifier {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$API_URL/users/login'),
+        Uri.parse('$apiUrl/users/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
@@ -148,7 +148,7 @@ class AuthService extends ChangeNotifier {
       if (token == null) throw 'Not authenticated';
 
       final response = await http.post(
-        Uri.parse('$API_URL/users/me/complete_profile'),
+        Uri.parse('$apiUrl/users/me/complete_profile'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

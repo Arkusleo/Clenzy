@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/auth_service.dart';
 
+import 'dart:ui';
+
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -26,17 +28,6 @@ class _SignupScreenState extends State<SignupScreen>
   // Role selection: 'user' or 'worker'
   String _selectedRole = 'user';
 
-  late AnimationController _roleAnimController;
-
-  @override
-  void initState() {
-    super.initState();
-    _roleAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-  }
-
   @override
   void dispose() {
     _nameController.dispose();
@@ -44,7 +35,6 @@ class _SignupScreenState extends State<SignupScreen>
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _roleAnimController.dispose();
     super.dispose();
   }
 
@@ -148,451 +138,405 @@ class _SignupScreenState extends State<SignupScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 40),
-                    // Logo Section
-                    Center(
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
+      body: Stack(
+        children: [
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/signup_bg.png'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(Colors.black45, BlendMode.darken),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(32),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(8),
+                          borderRadius: BorderRadius.circular(32),
+                          border: Border.all(
+                            color: Colors.white.withAlpha(20),
+                            width: 1.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(60),
+                              blurRadius: 40,
+                              offset: const Offset(0, 20),
+                            ),
+                          ],
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // App Icon
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Color(0xFF4A7DFF),
-                                      Color(0xFF3366FF),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(
-                                        0xFF3366FF,
-                                      ).withAlpha(77),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
+                              // Logo Section
+                              Center(
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            gradient: const LinearGradient(
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                              colors: [
+                                                Color(0xFF4A7DFF),
+                                                Color(0xFF3366FF),
+                                              ],
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            Icons.build_rounded,
+                                            color: Colors.white.withAlpha(15),
+                                            size: 24,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'Clenzy',
+                                          style: TextStyle(
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                            letterSpacing: -1,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                                child: const Icon(
-                                  Icons.build_rounded,
+                              ),
+                              const SizedBox(height: 32),
+                              const Text(
+                                'Create Account',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w900,
                                   color: Colors.white,
-                                  size: 26,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(height: 8),
                               const Text(
-                                'Clenzy',
+                                'Join our community of professionals',
                                 style: TextStyle(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1A1D26),
-                                  letterSpacing: -0.5,
+                                  fontSize: 15,
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+
+                              // Role Selector
+                              const Text(
+                                'I want to join as',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildRoleButton(
+                                      'User',
+                                      'user',
+                                      Icons.person_rounded,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _buildRoleButton(
+                                      'Worker',
+                                      'worker',
+                                      Icons.handyman_rounded,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _buildRoleButton(
+                                      'Admin',
+                                      'admin',
+                                      Icons.admin_panel_settings_rounded,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 32),
+
+                              // Name Field
+                              const Text(
+                                'Full Name',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _nameController,
+                                style: const TextStyle(color: Colors.black),
+                                textCapitalization: TextCapitalization.words,
+                                decoration: _buildInputDecoration(
+                                  hintText: 'John Doe',
+                                  prefixIcon: Icons.person_outline_rounded,
+                                ),
+                                validator: (value) =>
+                                    (value == null || value.isEmpty)
+                                        ? 'Enter your name'
+                                        : null,
+                              ),
+                              const SizedBox(height: 18),
+
+                              // Email Field
+                              const Text(
+                                'Email Address',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _emailController,
+                                style: const TextStyle(color: Colors.black),
+                                keyboardType: TextInputType.emailAddress,
+                                decoration: _buildInputDecoration(
+                                  hintText: 'name@example.com',
+                                  prefixIcon: Icons.email_outlined,
+                                ),
+                                validator: (value) =>
+                                    (value == null || value.isEmpty)
+                                        ? 'Enter your email'
+                                        : null,
+                              ),
+                              const SizedBox(height: 18),
+
+                              // Phone Field
+                              const Text(
+                                'Phone Number',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _phoneController,
+                                style: const TextStyle(color: Colors.black),
+                                keyboardType: TextInputType.phone,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(10),
+                                ],
+                                decoration: _buildInputDecoration(
+                                  hintText: '9876543210',
+                                  prefixIcon: Icons.phone_outlined,
+                                ),
+                                validator: (value) =>
+                                    (value == null || value.length != 10)
+                                        ? 'Enter 10-digit number'
+                                        : null,
+                              ),
+                              const SizedBox(height: 18),
+
+                              // Password Fields
+                              const Text(
+                                'Password',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _passwordController,
+                                style: const TextStyle(color: Colors.black),
+                                obscureText: _obscurePassword,
+                                decoration: _buildInputDecoration(
+                                  hintText: '••••••••',
+                                  prefixIcon: Icons.lock_outline_rounded,
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                      size: 20,
+                                    ),
+                                    onPressed: () => setState(
+                                        () => _obscurePassword = !_obscurePassword),
+                                  ),
+                                ),
+                                validator: (value) =>
+                                    (value == null || value.length < 6)
+                                        ? 'Min 6 characters'
+                                        : null,
+                              ),
+                              const SizedBox(height: 18),
+
+                              TextFormField(
+                                controller: _confirmPasswordController,
+                                style: const TextStyle(color: Colors.black),
+                                obscureText: _obscureConfirmPassword,
+                                decoration: _buildInputDecoration(
+                                  hintText: 'Confirm Password',
+                                  prefixIcon: Icons.lock_reset_outlined,
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscureConfirmPassword
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                      size: 20,
+                                    ),
+                                    onPressed: () => setState(() =>
+                                        _obscureConfirmPassword =
+                                            !_obscureConfirmPassword),
+                                  ),
+                                ),
+                                validator: (value) =>
+                                    (value != _passwordController.text)
+                                        ? 'Passwords match fail'
+                                        : null,
+                              ),
+                              const SizedBox(height: 40),
+
+                              // Signup Button
+                              SizedBox(
+                                width: double.infinity,
+                                height: 56,
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _handleSignup,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _selectedRole == 'worker'
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFF3366FF),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : Text(
+                                          _selectedRole == 'worker'
+                                              ? 'Register as Partner'
+                                              : 'Create Account',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+
+                              Center(
+                                child: GestureDetector(
+                                  onTap: () => Navigator.pop(context),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: 'Already have an account? ',
+                                      style: const TextStyle(
+                                        color: Color(0xFF8E99A4),
+                                        fontSize: 14,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: 'Login',
+                                          style: TextStyle(
+                                            color: _selectedRole == 'worker'
+                                                ? const Color(0xFF10B981)
+                                                : const Color(0xFF3366FF),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'YOUR HOME, OUR CARE',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF8E99A4),
-                              letterSpacing: 2.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    // Create Account Text
-                    const Text(
-                      'Create Account',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A1D26),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Choose your role and join the Clenzy community',
-                      style: TextStyle(fontSize: 15, color: Color(0xFF8E99A4)),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // ─── Role Selector ───────────────────────
-                    const Text(
-                      'I want to join as',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1D26),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildRoleButton(
-                            'User',
-                            'user',
-                            Icons.person_rounded,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildRoleButton(
-                            'Worker',
-                            'worker',
-                            Icons.build_rounded,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildRoleButton(
-                            'Admin',
-                            'admin',
-                            Icons.admin_panel_settings_rounded,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Full Name Field
-                    const Text(
-                      'Full Name',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1D26),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _nameController,
-                      textCapitalization: TextCapitalization.words,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF1A1D26),
-                      ),
-                      decoration: _buildInputDecoration(
-                        hintText: 'John Doe',
-                        prefixIcon: Icons.person_outline_rounded,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your full name';
-                        }
-                        if (value.length < 2) {
-                          return 'Name must be at least 2 characters';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 18),
-                    // Email Field
-                    const Text(
-                      'Email Address',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1D26),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF1A1D26),
-                      ),
-                      decoration: _buildInputDecoration(
-                        hintText: 'name@example.com',
-                        prefixIcon: Icons.email_outlined,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        if (!RegExp(
-                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                        ).hasMatch(value)) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 18),
-                    // Phone Number Field
-                    const Text(
-                      'Phone Number',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1D26),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10),
-                      ],
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF1A1D26),
-                      ),
-                      decoration: _buildInputDecoration(
-                        hintText: '9876543210',
-                        prefixIcon: Icons.phone_outlined,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your phone number';
-                        }
-                        if (value.length != 10) {
-                          return 'Phone number must be exactly 10 digits';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 18),
-                    // Password Field
-                    const Text(
-                      'Password',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1D26),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF1A1D26),
-                      ),
-                      decoration: _buildInputDecoration(
-                        hintText: '••••••••',
-                        prefixIcon: Icons.lock_outline_rounded,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: const Color(0xFFB0B7C3),
-                            size: 22,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
                         ),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
                     ),
-                    const SizedBox(height: 18),
-                    // Confirm Password Field
-                    const Text(
-                      'Confirm Password',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1D26),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: _obscureConfirmPassword,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF1A1D26),
-                      ),
-                      decoration: _buildInputDecoration(
-                        hintText: '••••••••',
-                        prefixIcon: Icons.lock_reset_outlined,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: const Color(0xFFB0B7C3),
-                            size: 22,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword =
-                                  !_obscureConfirmPassword;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please confirm your password';
-                        }
-                        if (value != _passwordController.text) {
-                          return 'Passwords do not match';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 30),
-                    // Create Account Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleSignup,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _selectedRole == 'worker'
-                              ? const Color(0xFF10B981)
-                              : const Color(0xFF3366FF),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shadowColor:
-                              (_selectedRole == 'worker'
-                                      ? const Color(0xFF10B981)
-                                      : const Color(0xFF3366FF))
-                                  .withAlpha(102),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2.5,
-                                ),
-                              )
-                            : Text(
-                                _selectedRole == 'worker'
-                                    ? 'Register as Worker'
-                                    : 'Create Account',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Login Link
-                    Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Already have an account? ',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF8E99A4),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.pop(context);
-                            },
-                            child: const Text(
-                              'Login',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF3366FF),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildRoleButton(String title, String role, IconData icon) {
     final isSelected = _selectedRole == role;
+    final themeColor =
+        role == 'worker' ? const Color(0xFF10B981) : const Color(0xFF3366FF);
+
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = role),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF3366FF).withOpacity(0.08)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? themeColor.withValues(alpha: 0.1) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected
-                ? const Color(0xFF3366FF)
-                : const Color(0xFFE8ECF4),
-            width: isSelected ? 1.5 : 1,
+            color: isSelected ? themeColor : const Color(0xFFE8ECF4),
+            width: isSelected ? 2 : 1.5,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
           children: [
             Icon(
               icon,
-              size: 16,
-              color: isSelected
-                  ? const Color(0xFF3366FF)
-                  : const Color(0xFF8E99A4),
+              size: 24,
+              color: isSelected ? themeColor : const Color(0xFFB0B7C3),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(height: 8),
             Text(
               title,
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected
-                    ? const Color(0xFF3366FF)
-                    : const Color(0xFF8E99A4),
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? themeColor : const Color(0xFF5C6A7A),
               ),
             ),
           ],

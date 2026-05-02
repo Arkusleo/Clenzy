@@ -5,6 +5,11 @@ import os
 import signal
 import time
 
+if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 def stream_output(process, prefix):
     """
     Reads lines from the given process's stdout and stderr and prints them
@@ -44,6 +49,8 @@ def main():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        encoding='utf-8',
+        errors='replace',
         bufsize=1,
         shell=True if os.name == 'nt' else False
     )
@@ -60,6 +67,8 @@ def main():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        encoding='utf-8',
+        errors='replace',
         bufsize=1,
         shell=True if os.name == 'nt' else False
     )

@@ -4,6 +4,7 @@ import 'auth/login_screen.dart';
 import 'main_navigation.dart';
 import 'partner/partner_navigation.dart';
 import 'partner/partner_onboarding_screen.dart';
+import '../widgets/animated_mesh_gradient.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -68,57 +69,110 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Logo Row
-            Row(
+      body: Stack(
+        children: [
+          const AnimatedMeshGradient(
+            colors: [
+              Color(0xFF3366FF), // Primary Blue
+              Color(0xFF8A2BE2), // Electric Purple
+              Color(0xFF00D1FF), // Cyan
+              Color(0xFF3366FF), // Neon Blue
+            ],
+          ),
+          // Gradient Overlay for readability
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.1),
+                  Colors.white.withValues(alpha: 0.8),
+                ],
+              ),
+            ),
+          ),
+          Center(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // App Icon
+                // Logo Row with Shadow
                 Container(
-                  width: 56,
-                  height: 56,
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3366FF),
-                    borderRadius: BorderRadius.circular(14),
+                    color: Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 40,
+                        offset: const Offset(0, 20),
+                      ),
+                    ],
                   ),
-                  child: const Icon(
-                    Icons.build_rounded,
-                    color: Colors.white,
-                    size: 30,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF4A7DFF), Color(0xFF3366FF)],
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF3366FF).withValues(alpha: 0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.build_rounded,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      const Text(
+                        'Clenzy',
+                        style: TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF1A1D26),
+                          letterSpacing: -1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 14),
-                // App Name
+                const SizedBox(height: 32),
                 const Text(
-                  'Clenzy',
+                  'YOUR HOME • OUR CARE',
                   style: TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                     color: Color(0xFF1A1D26),
+                    letterSpacing: 6.0,
+                  ),
+                ),
+                const SizedBox(height: 80),
+                const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF3366FF),
+                    strokeWidth: 3,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            // Tagline
-            const Text(
-              'YOUR HOME, OUR CARE',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF8E99A4),
-                letterSpacing: 3.0,
-              ),
-            ),
-            const SizedBox(height: 40),
-            // Loading indicator
-            const CircularProgressIndicator(color: Color(0xFF3366FF)),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -150,7 +150,7 @@ class _WorkerServiceAreasScreenState extends State<WorkerServiceAreasScreen> {
                     leading: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF3366FF).withOpacity(0.1),
+                        color: const Color(0xFF3366FF).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -191,7 +191,7 @@ class _WorkerServiceAreasScreenState extends State<WorkerServiceAreasScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),

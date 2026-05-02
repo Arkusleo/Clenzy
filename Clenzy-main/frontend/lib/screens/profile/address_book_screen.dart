@@ -195,7 +195,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
         side: BorderSide(
           color: isDefault
               ? const Color(0xFF3366FF)
-              : Colors.grey.withOpacity(0.2),
+              : Colors.grey.withValues(alpha: 0.2),
           width: isDefault ? 2 : 1,
         ),
       ),
@@ -226,7 +226,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3366FF).withOpacity(0.1),
+                      color: const Color(0xFF3366FF).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Text(

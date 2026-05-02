@@ -17,7 +17,7 @@ class UserService {
 
   Future<Map<String, dynamic>> getUserProfile() async {
     final response = await http.get(
-      Uri.parse('$API_URL/users/me'),
+      Uri.parse('$apiUrl/users/me'),
       headers: await _getHeaders(),
     );
 
@@ -39,7 +39,7 @@ class UserService {
     if (phone != null) body['phone'] = phone;
 
     final response = await http.put(
-      Uri.parse('$API_URL/users/me'),
+      Uri.parse('$apiUrl/users/me'),
       headers: await _getHeaders(),
       body: jsonEncode(body),
     );
@@ -53,7 +53,7 @@ class UserService {
 
   Future<List<dynamic>> getAddresses() async {
     final response = await http.get(
-      Uri.parse('$API_URL/users/me/addresses'),
+      Uri.parse('$apiUrl/users/me/addresses'),
       headers: await _getHeaders(),
     );
 
@@ -73,7 +73,7 @@ class UserService {
     required bool isDefault,
   }) async {
     final response = await http.post(
-      Uri.parse('$API_URL/users/me/addresses'),
+      Uri.parse('$apiUrl/users/me/addresses'),
       headers: await _getHeaders(),
       body: jsonEncode({
         'label': label,
@@ -110,7 +110,7 @@ class UserService {
     if (isDefault != null) body['is_default'] = isDefault;
 
     final response = await http.put(
-      Uri.parse('$API_URL/users/me/addresses/$id'),
+      Uri.parse('$apiUrl/users/me/addresses/$id'),
       headers: await _getHeaders(),
       body: jsonEncode(body),
     );
@@ -124,12 +124,87 @@ class UserService {
 
   Future<void> deleteAddress(int id) async {
     final response = await http.delete(
-      Uri.parse('$API_URL/users/me/addresses/$id'),
+      Uri.parse('$apiUrl/users/me/addresses/$id'),
       headers: await _getHeaders(),
     );
 
     if (response.statusCode != 204 && response.statusCode != 200) {
       throw 'Failed to delete address';
     }
+  }
+
+  // --- Favorites ---
+  Future<List<dynamic>> getFavoritePartners() async {
+    final response = await http.get(
+      Uri.parse('$apiUrl/users/me/favorites'),
+      headers: await _getHeaders(),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw 'Failed to load favorite partners';
+    }
+  }
+
+  Future<void> addFavoritePartner(int partnerId) async {
+    final response = await http.post(
+      Uri.parse('$apiUrl/users/me/favorites/$partnerId'),
+      headers: await _getHeaders(),
+    );
+    if (response.statusCode != 200) {
+      throw 'Failed to add favorite';
+    }
+  }
+
+  Future<void> removeFavoritePartner(int partnerId) async {
+    final response = await http.delete(
+      Uri.parse('$apiUrl/users/me/favorites/$partnerId'),
+      headers: await _getHeaders(),
+    );
+    if (response.statusCode != 200) {
+      throw 'Failed to remove favorite';
+    }
+  }
+
+  // --- Presence ---
+  Future<void> updatePresence(bool isOnline) async {
+    final response = await http.patch(
+      Uri.parse('$apiUrl/users/me/presence?is_online=$isOnline'),
+      headers: await _getHeaders(),
+    );
+    if (response.statusCode != 200) {
+      throw 'Failed to update presence';
+    }
+  }
+
+  // --- Reviews ---
+  Future<bool> submitReview(
+    int jobId,
+    int providerId,
+    int rating,
+    String? comment,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$apiUrl/users/reviews'),
+      headers: await _getHeaders(),
+      body: jsonEncode({
+        'job_id': jobId,
+        'partner_id': providerId,
+        'rating': rating,
+        'comment': comment,
+      }),
+    );
+    return response.statusCode == 200 || response.statusCode == 201;
+  }
+
+  Future<List<dynamic>> getProviderReviews(int providerId) async {
+    final response = await http.get(
+      Uri.parse('$apiUrl/users/reviews/$providerId'),
+      headers: await _getHeaders(),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    return [];
   }
 }

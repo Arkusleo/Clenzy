@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String WS_URL = 'ws://127.0.0.1:8000/api/ws';
-const String API_URL = 'http://127.0.0.1:8000/api';
+const String wsUrl = 'ws://127.0.0.1:8000/api/ws';
+const String apiUrl = 'http://127.0.0.1:8000/api';
 
 class LocationService {
   final _storage = const FlutterSecureStorage();
@@ -22,7 +22,7 @@ class LocationService {
     final userId = await _storage.read(key: 'userId');
     if (userId == null) return;
 
-    _channel = WebSocketChannel.connect(Uri.parse('$WS_URL/$userId'));
+    _channel = WebSocketChannel.connect(Uri.parse('$wsUrl/$userId'));
     _channel?.stream.listen((message) {
       final decoded = jsonDecode(message);
       if (decoded['type'] == 'location_update') {
@@ -122,7 +122,7 @@ class LocationService {
     try {
       // In a real application, this would be an HTTP POST
       // to update the user's `is_online` and `latitude`/`longitude` fields.
-      // E.g., http.put('$API_URL/users/status', body: { isOnline, ... })
+      // E.g., http.put('$apiUrl/users/status', body: { isOnline, ... })
     } catch (e) {
       debugPrint('Error updating worker status: $e');
       rethrow;

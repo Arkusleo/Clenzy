@@ -3,14 +3,12 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
-const String API_URL = 'http://127.0.0.1:8000/api';
-const String WS_URL = 'ws://127.0.0.1:8000/api/ws';
+const String apiUrl = 'http://127.0.0.1:8000/api';
+const String wsUrl = 'ws://127.0.0.1:8000/api/ws';
 
 class JobService {
   final _storage = const FlutterSecureStorage();
-  WebSocketChannel? _channel;
   
   final _customerJobsController = StreamController<List<Map<String, dynamic>>>.broadcast();
   final _workerJobsController = StreamController<List<Map<String, dynamic>>>.broadcast();
@@ -48,7 +46,7 @@ class JobService {
     }
 
     final response = await http.post(
-      Uri.parse('$API_URL/bookings/'),
+      Uri.parse('$apiUrl/bookings/'),
       headers: headers,
       body: jsonEncode({
         'service_type': serviceType,
@@ -75,7 +73,7 @@ class JobService {
   Future<Map<String, dynamic>> acceptJob(String jobId) async {
     final headers = await _getAuthHeaders();
     final response = await http.post(
-      Uri.parse('$API_URL/bookings/$jobId/accept'),
+      Uri.parse('$apiUrl/bookings/$jobId/accept'),
       headers: headers,
     );
 
@@ -97,7 +95,7 @@ class JobService {
   Future<void> updateJobStatus(String jobId, String status) async {
     final headers = await _getAuthHeaders();
     final response = await http.put(
-      Uri.parse('$API_URL/bookings/$jobId/status?new_status=$status'),
+      Uri.parse('$apiUrl/bookings/$jobId/status?new_status=$status'),
       headers: headers,
     );
 
@@ -112,7 +110,7 @@ class JobService {
   Future<bool> verifyOTP(String jobId, String otp) async {
     final headers = await _getAuthHeaders();
     final response = await http.post(
-      Uri.parse('$API_URL/bookings/$jobId/verify-otp?otp=$otp'),
+      Uri.parse('$apiUrl/bookings/$jobId/verify-otp?otp=$otp'),
       headers: headers,
     );
 
@@ -124,17 +122,17 @@ class JobService {
   // ============================================
 
   Stream<List<Map<String, dynamic>>> getCustomerJobs(String customerId) {
-    _fetchAndAdd(Uri.parse('$API_URL/bookings/customer'), _customerJobsController);
+    _fetchAndAdd(Uri.parse('$apiUrl/bookings/customer'), _customerJobsController);
     return _customerJobsController.stream;
   }
 
   Stream<List<Map<String, dynamic>>> getWorkerJobs(String workerId) {
-    _fetchAndAdd(Uri.parse('$API_URL/bookings/worker'), _workerJobsController);
+    _fetchAndAdd(Uri.parse('$apiUrl/bookings/worker'), _workerJobsController);
     return _workerJobsController.stream;
   }
 
   Stream<List<Map<String, dynamic>>> getAvailableJobs() {
-    _fetchAndAdd(Uri.parse('$API_URL/bookings/available'), _availableJobsController);
+    _fetchAndAdd(Uri.parse('$apiUrl/bookings/available'), _availableJobsController);
     return _availableJobsController.stream;
   }
 
@@ -164,7 +162,7 @@ class JobService {
   Future<void> cancelJob(String jobId) async {
     final headers = await _getAuthHeaders();
     await http.put(
-      Uri.parse('$API_URL/bookings/$jobId/status?new_status=cancelled'),
+      Uri.parse('$apiUrl/bookings/$jobId/status?new_status=cancelled'),
       headers: headers,
     );
   }

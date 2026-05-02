@@ -144,7 +144,7 @@ class _WorkerNotificationSettingsScreenState
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -224,7 +224,7 @@ class _WorkerNotificationSettingsScreenState
               Switch.adaptive(
                 value: value,
                 onChanged: onChanged,
-                activeColor: Colors.white,
+                activeThumbColor: Colors.white,
                 activeTrackColor: const Color(0xFF3366FF),
                 inactiveThumbColor: Colors.white,
                 inactiveTrackColor: Colors.grey[300],

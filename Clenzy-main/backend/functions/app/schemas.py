@@ -19,6 +19,7 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
+    is_online: Optional[bool] = None
 
 class UserResponse(UserBase):
     id: int
@@ -85,7 +86,7 @@ class JobBase(BaseModel):
     description: Optional[str] = None
 
 class JobCreate(JobBase):
-    pass
+    provider_id: Optional[int] = None
 
 class JobResponse(JobBase):
     id: int
@@ -120,9 +121,40 @@ class AdminPartnerProfileResponse(BaseModel):
     service_radius: float
     approval_status: str
     is_profile_complete: bool
+    average_rating: float
+    total_reviews: int
     
     # We include user details as a nested dict for easy display
     user: Optional[UserResponse] = None
 
     class Config:
         from_attributes = True
+
+# --- Reviews ---
+class ReviewBase(BaseModel):
+    rating: int # 1-5
+    comment: Optional[str] = None
+
+class ReviewCreate(ReviewBase):
+    job_id: int
+    partner_id: int
+
+class ReviewResponse(ReviewBase):
+    id: int
+    job_id: int
+    reviewer_id: int
+    partner_id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+# --- Promo Codes ---
+class PromoValidateRequest(BaseModel):
+    code: str
+    job_total: float
+
+class PromoValidateResponse(BaseModel):
+    valid: bool
+    discount_amount: float
+    message: str

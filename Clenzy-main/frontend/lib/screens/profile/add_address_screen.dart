@@ -140,7 +140,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               value: _isDefault,
               onChanged: (val) => setState(() => _isDefault = val),
               contentPadding: EdgeInsets.zero,
-              activeColor: const Color(0xFF3366FF),
+              activeThumbColor: const Color(0xFF3366FF),
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -189,11 +189,11 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
         ),
       ),
     );

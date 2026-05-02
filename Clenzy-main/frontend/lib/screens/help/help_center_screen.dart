@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'safety_screen.dart';
 
 class HelpCenterScreen extends StatefulWidget {
@@ -142,7 +143,14 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () async {
+                            final Uri emailLaunchUri = Uri(
+                              scheme: 'mailto',
+                              path: 'akshais954@gmail.com',
+                              query: 'subject=Clenzy Support Request',
+                            );
+                            launchUrl(emailLaunchUri);
+                          },
                           icon: const Icon(Icons.email_rounded, size: 20),
                           label: const Text(
                             'Email Support',
@@ -280,8 +288,17 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   Widget _buildLiveChatCard() {
-    return Container(
-      height: 140,
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => _buildLiveChatBottomSheet(),
+        );
+      },
+      child: Container(
+        height: 140,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -348,10 +365,11 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildFaqItem(int index, Map<String, dynamic> item) {
+Widget _buildFaqItem(int index, Map<String, dynamic> item) {
     final isExpanded = _expandedItems[index] ?? false;
 
     return Container(
@@ -440,6 +458,130 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             duration: const Duration(milliseconds: 200),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLiveChatBottomSheet() {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFFE8ECF4),
+                  ),
+                  child: const Icon(Icons.support_agent_rounded, color: Color(0xFF3366FF)),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Live Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text('Typically replies in 2 mins', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.grey),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                _buildChatBubble('Hi there! How can we help you today with your Clenzy booking?', isAgent: true),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + MediaQuery.of(context).viewInsets.bottom),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Colors.grey.shade200)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
+                      hintStyle: TextStyle(color: Colors.grey.shade400),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF5F7FA),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFF3366FF),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                    onPressed: () {},
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatBubble(String text, {required bool isAgent}) {
+    return Align(
+      alignment: isAgent ? Alignment.centerLeft : Alignment.centerRight,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isAgent ? const Color(0xFFF5F7FA) : const Color(0xFF3366FF),
+          borderRadius: BorderRadius.circular(20).copyWith(
+            bottomLeft: isAgent ? const Radius.circular(0) : const Radius.circular(20),
+            bottomRight: isAgent ? const Radius.circular(20) : const Radius.circular(0),
+          ),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isAgent ? const Color(0xFF1A1D26) : Colors.white,
+            fontSize: 15,
+          ),
+        ),
       ),
     );
   }

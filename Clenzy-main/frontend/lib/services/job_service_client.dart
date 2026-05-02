@@ -5,17 +5,25 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-const String API_URL = 'http://127.0.0.1:8000/api';
-const String WS_URL = 'ws://127.0.0.1:8000/api/ws';
+const String apiUrl = 'http://127.0.0.1:8000/api';
+const String wsUrl = 'ws://127.0.0.1:8000/api/ws';
 
 class JobServiceClient {
+  // Singleton pattern
+  static final JobServiceClient _instance = JobServiceClient._internal();
+  factory JobServiceClient() => _instance;
+  JobServiceClient._internal();
+
   final _storage = const FlutterSecureStorage();
   WebSocketChannel? _channel;
-  
+
   // Real-time stream controllers to replace Firestore Stream behavior
-  final _customerJobsController = StreamController<List<Map<String, dynamic>>>.broadcast();
-  final _workerJobsController = StreamController<List<Map<String, dynamic>>>.broadcast();
-  final _availableJobsController = StreamController<List<Map<String, dynamic>>>.broadcast();
+  final _customerJobsController =
+      StreamController<List<Map<String, dynamic>>>.broadcast();
+  final _workerJobsController =
+      StreamController<List<Map<String, dynamic>>>.broadcast();
+  final _availableJobsController =
+      StreamController<List<Map<String, dynamic>>>.broadcast();
 
   // Helper to fetch authorization header
   Future<Map<String, String>> _getAuthHeaders() async {
@@ -32,9 +40,9 @@ class JobServiceClient {
     final userId = await _storage.read(key: 'userId');
     if (userId == null) return;
 
-    _channel = WebSocketChannel.connect(Uri.parse('$WS_URL/$userId'));
+    _channel = WebSocketChannel.connect(Uri.parse('$wsUrl/$userId'));
     _channel?.stream.listen((message) {
-      final decoded = jsonDecode(message);
+      jsonDecode(message); // Validate format
       // Depending on the signal (new_job, status_update), you could trigger a refetch or patch state directly.
       // For simplicity, we just trigger refetches here mimicking Firestore snapshots loosely.
       fetchCustomerJobs();
@@ -54,11 +62,12 @@ class JobServiceClient {
     required double longitude,
     required String address,
     required String description,
+    int? providerId,
   }) async {
     final headers = await _getAuthHeaders();
 
     final response = await http.post(
-      Uri.parse('$API_URL/bookings/'),
+      Uri.parse('$apiUrl/bookings/'),
       headers: headers,
       body: jsonEncode({
         'service_type': serviceType,
@@ -68,6 +77,7 @@ class JobServiceClient {
         'longitude': longitude,
         'address': address,
         'description': description,
+        if (providerId != null) 'provider_id': providerId,
       }),
     );
 
@@ -87,18 +97,14 @@ class JobServiceClient {
     final headers = await _getAuthHeaders();
 
     final response = await http.post(
-      Uri.parse('$API_URL/bookings/$jobId/accept'),
+      Uri.parse('$apiUrl/bookings/$jobId/accept'),
       headers: headers,
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       fetchWorkerJobs(); // Update stream
-      return {
-        'success': true,
-        'jobId': data['id'],
-        'otp': data['otp'],
-      };
+      return {'success': true, 'jobId': data['id'], 'otp': data['otp']};
     } else {
       throw Exception('Failed to accept job: ${response.body}');
     }
@@ -111,7 +117,7 @@ class JobServiceClient {
     final headers = await _getAuthHeaders();
 
     final response = await http.put(
-      Uri.parse('$API_URL/bookings/$jobId/status?new_status=$newStatus'),
+      Uri.parse('$apiUrl/bookings/$jobId/status?new_status=$newStatus'),
       headers: headers,
     );
 
@@ -128,7 +134,7 @@ class JobServiceClient {
     final headers = await _getAuthHeaders();
 
     final response = await http.post(
-      Uri.parse('$API_URL/bookings/$jobId/verify-otp?otp=$inputOtp'),
+      Uri.parse('$apiUrl/bookings/$jobId/verify-otp?otp=$inputOtp'),
       headers: headers,
     );
 
@@ -141,15 +147,39 @@ class JobServiceClient {
   }
 
   // ============================================
+  // PROMO CODES
+  // ============================================
+  Future<Map<String, dynamic>> validatePromoCode(
+    String code,
+    double jobTotal,
+  ) async {
+    final headers = await _getAuthHeaders();
+    final response = await http.post(
+      Uri.parse('$apiUrl/promo/validate'),
+      headers: headers,
+      body: jsonEncode({'code': code, 'job_total': jobTotal}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw jsonDecode(response.body)['detail'] ?? 'Invalid promo code';
+    }
+  }
+
+  // ============================================
   // FETCHERS AND STREAMS
   // ============================================
 
   // These functions populate the streams simulating Firestore .snapshots()
-  
+
   Future<void> fetchCustomerJobs() async {
     try {
       final headers = await _getAuthHeaders();
-      final response = await http.get(Uri.parse('$API_URL/bookings/customer'), headers: headers);
+      final response = await http.get(
+        Uri.parse('$apiUrl/bookings/customer'),
+        headers: headers,
+      );
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         _customerJobsController.add(data.cast<Map<String, dynamic>>());
@@ -162,7 +192,10 @@ class JobServiceClient {
   Future<void> fetchWorkerJobs() async {
     try {
       final headers = await _getAuthHeaders();
-      final response = await http.get(Uri.parse('$API_URL/bookings/worker'), headers: headers);
+      final response = await http.get(
+        Uri.parse('$apiUrl/bookings/worker'),
+        headers: headers,
+      );
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         _workerJobsController.add(data.cast<Map<String, dynamic>>());
@@ -175,7 +208,10 @@ class JobServiceClient {
   Future<void> fetchAvailableJobs() async {
     try {
       final headers = await _getAuthHeaders();
-      final response = await http.get(Uri.parse('$API_URL/bookings/available'), headers: headers);
+      final response = await http.get(
+        Uri.parse('$apiUrl/bookings/available'),
+        headers: headers,
+      );
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         _availableJobsController.add(data.cast<Map<String, dynamic>>());
@@ -202,6 +238,11 @@ class JobServiceClient {
   }
 
   void dispose() {
+    // Prevent accidental disposal of the singleton by standard widget lifecycles.
+    // Call forceDispose() on user logout.
+  }
+
+  void forceDispose() {
     _channel?.sink.close();
     _customerJobsController.close();
     _workerJobsController.close();

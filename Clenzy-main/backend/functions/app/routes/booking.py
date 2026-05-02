@@ -15,7 +15,8 @@ def create_job(job: schemas.JobCreate, db: Session = Depends(get_db), current_us
     otp = generate_otp()
     new_job = models.Job(
         customer_id=current_user.id,
-        status="searching",
+        status="accepted" if job.provider_id else "searching",
+        worker_id=job.provider_id if job.provider_id else None,
         service_type=job.service_type,
         otp=otp,
         price=job.price,
@@ -25,6 +26,8 @@ def create_job(job: schemas.JobCreate, db: Session = Depends(get_db), current_us
         address=job.address,
         description=job.description
     )
+    if job.provider_id:
+        new_job.accepted_at = datetime.utcnow()
     db.add(new_job)
     db.commit()
     db.refresh(new_job)
@@ -112,3 +115,27 @@ def verify_otp(job_id: int, otp: str, db: Session = Depends(get_db), current_use
     db.commit()
     db.refresh(job)
     return job
+
+# --- Promo Codes ---
+@router.post("/promo/validate", response_model=schemas.PromoValidateResponse)
+def validate_promo_code(
+    promo: schemas.PromoValidateRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    code_record = db.query(models.PromoCode).filter(
+        models.PromoCode.code == promo.code,
+        models.PromoCode.is_active == True
+    ).first()
+    
+    if not code_record:
+        return schemas.PromoValidateResponse(valid=False, discount_amount=0.0, message="Invalid or expired promo code")
+        
+    if code_record.valid_until and code_record.valid_until.replace(tzinfo=None) < datetime.utcnow():
+        return schemas.PromoValidateResponse(valid=False, discount_amount=0.0, message="Promo code expired")
+        
+    discount = promo.job_total * (code_record.discount_percentage / 100.0)
+    if code_record.max_discount and discount > code_record.max_discount:
+        discount = code_record.max_discount
+        
+    return schemas.PromoValidateResponse(valid=True, discount_amount=discount, message="Promo code applied successfully")

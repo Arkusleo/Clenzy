@@ -111,14 +111,15 @@ class _AdminPartnersDetailsScreenState
                 final status = partner['status'];
 
                 Color statusColor;
-                if (status == 'Online')
+                if (status == 'Online') {
                   statusColor = const Color(0xFF4CAF50);
-                else if (status == 'Offline')
+                } else if (status == 'Offline') {
                   statusColor = Colors.grey[600]!;
-                else if (status == 'Pending')
+                } else if (status == 'Pending') {
                   statusColor = Colors.orange;
-                else
+                } else {
                   statusColor = Colors.red;
+                }
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),

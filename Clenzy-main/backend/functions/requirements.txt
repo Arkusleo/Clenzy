@@ -9,3 +9,4 @@ pyjwt
 email-validator
 cryptography
 flask-cors
+razorpay

@@ -69,12 +69,12 @@ class _AdminApprovalsScreenState extends State<AdminApprovalsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
+      backgroundColor: const Color(0xFF0D0F14),
       appBar: AppBar(
-        title: const Text('Pending Approvals', style: TextStyle(color: Color(0xFF1A1D26), fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        iconTheme: const IconThemeData(color: Color(0xFF1A1D26)),
+        title: const Text('Pending Approvals', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF0D0F14),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator())
@@ -103,10 +103,11 @@ class _AdminApprovalsScreenState extends State<AdminApprovalsScreen> {
         
         return Card(
           elevation: 0,
+          color: const Color(0xFF131722),
           margin: const EdgeInsets.only(bottom: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.grey.shade200),
+            side: BorderSide(color: Colors.white.withAlpha(20)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -117,11 +118,11 @@ class _AdminApprovalsScreenState extends State<AdminApprovalsScreen> {
                   children: [
                     CircleAvatar(
                       radius: 24,
-                      backgroundColor: const Color(0xFF3366FF).withAlpha(26),
+                      backgroundColor: const Color(0xFF3366FF).withAlpha(40),
                       child: Text(
                         (user['full_name'] ?? '?')[0].toUpperCase(),
                         style: const TextStyle(
-                          color: Color(0xFF3366FF),
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 20,
                         ),
@@ -137,7 +138,7 @@ class _AdminApprovalsScreenState extends State<AdminApprovalsScreen> {
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A1D26),
+                              color: Colors.white,
                             ),
                           ),
                           Text(
@@ -212,7 +213,7 @@ class _AdminApprovalsScreenState extends State<AdminApprovalsScreen> {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(color: Color(0xFF1A1D26)),
+            style: const TextStyle(color: Colors.white70),
           ),
         ),
       ],

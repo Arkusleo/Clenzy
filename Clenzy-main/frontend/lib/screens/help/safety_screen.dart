@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SafetyScreen extends StatefulWidget {
   const SafetyScreen({super.key});
@@ -32,6 +33,23 @@ class _SafetyScreenState extends State<SafetyScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Mock action triggered: $actionName')),
     );
+  }
+
+  Future<void> _triggerSOS() async {
+    // 1. Show In-App Notification (Simulating sending a notification)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('SOS Alert: Notifying & Calling 9778155291...'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 4),
+      ),
+    );
+
+    // 2. Call the emergency contact
+    final Uri contactUri = Uri.parse('tel:9778155291');
+    if (await canLaunchUrl(contactUri)) {
+      await launchUrl(contactUri);
+    }
   }
 
   @override
@@ -70,7 +88,7 @@ class _SafetyScreenState extends State<SafetyScreen>
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -114,7 +132,7 @@ class _SafetyScreenState extends State<SafetyScreen>
 
                 // Pulsing SOS Button
                 GestureDetector(
-                  onTap: () => _showMockAction('SOS Emergency Activated!'),
+                  onTap: _triggerSOS,
                   child: ScaleTransition(
                     scale: _animation,
                     child: Container(
@@ -125,7 +143,7 @@ class _SafetyScreenState extends State<SafetyScreen>
                         color: Colors.red[50], // Outer halo
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.red.withOpacity(0.3),
+                            color: Colors.red.withValues(alpha: 0.3),
                             blurRadius: 30,
                             spreadRadius: 10,
                           ),
@@ -340,10 +358,10 @@ class _SafetyScreenState extends State<SafetyScreen>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.withOpacity(0.2)),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

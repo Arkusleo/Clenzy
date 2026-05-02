@@ -62,12 +62,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
+      backgroundColor: const Color(0xFF0D0F14),
       appBar: AppBar(
-        title: const Text('Manage Users', style: TextStyle(color: Color(0xFF1A1D26), fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        iconTheme: const IconThemeData(color: Color(0xFF1A1D26)),
+        title: const Text('Manage Users', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF0D0F14),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator())
@@ -79,7 +79,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
   Widget _buildUserList() {
     if (_users.isEmpty) {
-      return const Center(child: Text('No users found.'));
+      return const Center(child: Text('No users found.', style: TextStyle(color: Colors.white70)));
     }
 
     return ListView.builder(
@@ -92,28 +92,29 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         
         return Card(
           elevation: 0,
+          color: const Color(0xFF131722),
           margin: const EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
+            side: BorderSide(color: Colors.white.withAlpha(20)),
           ),
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
-              backgroundColor: const Color(0xFF3366FF).withAlpha(26),
+              backgroundColor: const Color(0xFF3366FF).withAlpha(40),
               child: Text(
                 (user['full_name'] ?? '?')[0].toUpperCase(),
-                style: const TextStyle(color: Color(0xFF3366FF), fontWeight: FontWeight.bold),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
             title: Text(
               user['full_name'] ?? 'Unknown',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A1D26)),
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user['email'] ?? ''),
+                Text(user['email'] ?? '', style: const TextStyle(color: Colors.white54)),
                 const SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

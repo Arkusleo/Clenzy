@@ -5,6 +5,8 @@ import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'payment_methods_screen.dart';
 import 'address_book_screen.dart';
+import 'transaction_history_screen.dart';
+import 'favorite_partners_screen.dart';
 import '../../services/user_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -252,6 +254,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => const AddressBookScreen(),
+                    ),
+                  );
+                },
+              ),
+              _buildMenuItem(
+                Icons.history_rounded,
+                'Transaction History',
+                onTap: () {
+                  final uId = _userProfile?['id']?.toString() ?? '1';
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TransactionHistoryScreen(userId: uId),
+                    ),
+                  );
+                },
+              ),
+              _buildMenuItem(
+                Icons.favorite_border_rounded,
+                'Saved Providers',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const FavoritePartnersScreen(),
                     ),
                   );
                 },

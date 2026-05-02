@@ -1,7 +1,14 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey, Text, JSON
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey, Text, JSON, Table
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from .database import Base
+
+user_favorite_partners = Table(
+    "user_favorite_partners",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column("partner_id", Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+)
 
 class User(Base):
     __tablename__ = "users"
@@ -23,6 +30,13 @@ class User(Base):
     wallet = relationship("Wallet", back_populates="user", uselist=False)
     partner_profile = relationship("PartnerProfile", back_populates="user", uselist=False)
     addresses = relationship("Address", back_populates="user", cascade="all, delete-orphan")
+    favorite_partners = relationship(
+        "User",
+        secondary=user_favorite_partners,
+        primaryjoin="User.id==user_favorite_partners.c.user_id",
+        secondaryjoin="User.id==user_favorite_partners.c.partner_id",
+        backref="favorited_by"
+    )
 
 class Address(Base):
     __tablename__ = "addresses"
@@ -64,6 +78,8 @@ class PartnerProfile(Base):
     team_members = Column(JSON, default=list)
     selected_services = Column(JSON, default=list)
     custom_skills = Column(JSON, default=list)
+    average_rating = Column(Float, default=0.0)
+    total_reviews = Column(Integer, default=0)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -129,3 +145,53 @@ class Transaction(Base):
     job_id = Column(Integer, ForeignKey("jobs.id"), nullable=True)
     description = Column(String(255))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, ForeignKey("jobs.id", ondelete="CASCADE"))
+    reviewer_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    partner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    rating = Column(Integer)
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class PromoCode(Base):
+    __tablename__ = "promo_codes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(50), unique=True, index=True)
+    discount_percentage = Column(Float)
+    max_discount = Column(Float, nullable=True)
+    valid_until = Column(DateTime(timezone=True), nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class Payment(Base):
+    __tablename__ = "payments"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    job_id = Column(Integer, ForeignKey("jobs.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    razorpay_order_id = Column(Text, unique=True, index=True, nullable=False)
+    razorpay_payment_id = Column(Text, unique=True, index=True, nullable=True)
+    razorpay_signature = Column(Text, nullable=True)
+    amount = Column(Float, nullable=False)
+    currency = Column(String(10), nullable=False, default="INR")
+    payment_status = Column(String(50), nullable=False, default="pending")
+    payment_method = Column(String(50), nullable=True)
+    platform_fee = Column(Float, nullable=True)
+    worker_amount = Column(Float, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now(), nullable=False)
+
+class Payout(Base):
+    __tablename__ = "payouts"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    worker_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    payment_id = Column(Integer, ForeignKey("payments.id"), nullable=False)
+    worker_amount = Column(Float, nullable=False)
+    payout_status = Column(String(50), nullable=False, default="pending")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

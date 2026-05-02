@@ -12,6 +12,10 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
+
+    db_phone = db.query(models.User).filter(models.User.phone == user.phone).first()
+    if db_phone:
+        raise HTTPException(status_code=400, detail="Phone number already registered")
         
     hashed_password = auth.get_password_hash(user.password)
     new_user = models.User(
@@ -208,3 +212,89 @@ def delete_address(
         if another:
             another.is_default = True
             db.commit()
+
+# --- Presence ---
+@router.patch("/me/presence", response_model=schemas.UserResponse)
+def update_presence(
+    is_online: bool,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    current_user.is_online = is_online
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+# --- Reviews ---
+@router.post("/reviews", response_model=schemas.ReviewResponse)
+def create_review(
+    review: schemas.ReviewCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    # Ensure job exists and is completed
+    job = db.query(models.Job).filter(models.Job.id == review.job_id).first()
+    if not job or job.status != "completed":
+        raise HTTPException(status_code=400, detail="Job must be completed to leave a review")
+        
+    partner_profile = db.query(models.PartnerProfile).filter(models.PartnerProfile.user_id == review.partner_id).first()
+    if not partner_profile:
+        raise HTTPException(status_code=404, detail="Partner not found")
+        
+    new_review = models.Review(
+        **review.model_dump(),
+        reviewer_id=current_user.id
+    )
+    db.add(new_review)
+    
+    # Update average rating
+    total = partner_profile.total_reviews
+    current_avg = partner_profile.average_rating
+    
+    partner_profile.average_rating = ((current_avg * total) + review.rating) / (total + 1)
+    partner_profile.total_reviews += 1
+    
+    db.commit()
+    db.refresh(new_review)
+    return new_review
+
+@router.get("/reviews/{partner_id}", response_model=List[schemas.ReviewResponse])
+def get_partner_reviews(
+    partner_id: int,
+    db: Session = Depends(get_db)
+):
+    return db.query(models.Review).filter(models.Review.partner_id == partner_id).all()
+
+# --- Favorites ---
+@router.post("/me/favorites/{partner_id}")
+def add_favorite_partner(
+    partner_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    partner = db.query(models.User).filter(models.User.id == partner_id).first()
+    if not partner:
+        raise HTTPException(status_code=404, detail="Partner not found")
+        
+    if partner not in current_user.favorite_partners:
+        current_user.favorite_partners.append(partner)
+        db.commit()
+    return {"status": "success"}
+
+@router.delete("/me/favorites/{partner_id}")
+def remove_favorite_partner(
+    partner_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    partner = db.query(models.User).filter(models.User.id == partner_id).first()
+    if partner and partner in current_user.favorite_partners:
+        current_user.favorite_partners.remove(partner)
+        db.commit()
+    return {"status": "success"}
+
+@router.get("/me/favorites", response_model=List[schemas.UserResponse])
+def get_favorite_partners(
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    return current_user.favorite_partners

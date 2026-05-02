@@ -16,7 +16,7 @@ class AdminService {
   Future<Map<String, dynamic>> getDashboardStats() async {
     try {
       final response = await http.get(
-        Uri.parse('$API_URL/admin/stats'),
+        Uri.parse('$apiUrl/admin/stats'),
         headers: await _getHeaders(),
       );
 
@@ -33,7 +33,7 @@ class AdminService {
   Future<List<dynamic>> getUsers() async {
     try {
       final response = await http.get(
-        Uri.parse('$API_URL/admin/users'),
+        Uri.parse('$apiUrl/admin/users'),
         headers: await _getHeaders(),
       );
 
@@ -50,7 +50,7 @@ class AdminService {
   Future<void> toggleUserStatus(int userId, bool isActive) async {
     try {
       final response = await http.put(
-        Uri.parse('$API_URL/admin/users/$userId/status?is_active=$isActive'),
+        Uri.parse('$apiUrl/admin/users/$userId/status?is_active=$isActive'),
         headers: await _getHeaders(),
       );
 
@@ -65,7 +65,7 @@ class AdminService {
   Future<List<dynamic>> getPendingApprovals() async {
     try {
       final response = await http.get(
-        Uri.parse('$API_URL/admin/partner-approvals'),
+        Uri.parse('$apiUrl/admin/partner-approvals'),
         headers: await _getHeaders(),
       );
 
@@ -82,7 +82,7 @@ class AdminService {
   Future<void> reviewPartner(int profileId, bool approve) async {
     try {
       final response = await http.put(
-        Uri.parse('$API_URL/admin/partner-approvals/$profileId?approve=$approve'),
+        Uri.parse('$apiUrl/admin/partner-approvals/$profileId?approve=$approve'),
         headers: await _getHeaders(),
       );
 
