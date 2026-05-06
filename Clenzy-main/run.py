@@ -5,11 +5,6 @@ import os
 import signal
 import time
 
-if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
-
 def stream_output(process, prefix):
     """
     Reads lines from the given process's stdout and stderr and prints them
@@ -103,4 +98,4 @@ def main():
         print("[SYSTEM] All processes terminated. Goodbye!")
 
 if __name__ == "__main__":
-    main()
+    main()

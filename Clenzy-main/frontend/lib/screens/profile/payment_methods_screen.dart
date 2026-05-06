@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../services/payment_service.dart';
 import '../../services/job_service_client.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -121,6 +122,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   Future<void> _processCheckout(String methodName) async {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
+    final storage = const FlutterSecureStorage();
+    final userId = await storage.read(key: 'userId') ?? '';
 
     try {
       // 1. Always create the job first so it shows up in Bookings
@@ -134,7 +137,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         description: 'New booking via $methodName',
       );
 
-      final jobId = int.tryParse(jobIdStr) ?? 1;
+      final String jobId = jobIdStr;
 
       if (methodName == 'Cash on Delivery') {
         // Just show success
@@ -146,7 +149,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           150, // amount
           'INR',
           jobId,
-          1, // userId
+          userId, // dynamic userId
         );
 
         final options = {

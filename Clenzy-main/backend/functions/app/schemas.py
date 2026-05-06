@@ -22,15 +22,12 @@ class UserUpdate(BaseModel):
     is_online: Optional[bool] = None
 
 class UserResponse(UserBase):
-    id: int
+    id: str
     is_active: bool
     is_verified: bool
     is_online: bool
     created_at: datetime
     
-    class Config:
-        from_attributes = True
-
 # --- Addresses ---
 class AddressBase(BaseModel):
     label: str
@@ -52,18 +49,15 @@ class AddressUpdate(BaseModel):
     is_default: Optional[bool] = None
 
 class AddressResponse(AddressBase):
-    id: int
-    user_id: int
+    id: str
+    user_id: str
     created_at: datetime
     
-    class Config:
-        from_attributes = True
-
 # --- Auth ---
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user_id: int
+    user_id: str
     role: str
     is_profile_complete: Optional[bool] = False
 
@@ -86,22 +80,19 @@ class JobBase(BaseModel):
     description: Optional[str] = None
 
 class JobCreate(JobBase):
-    provider_id: Optional[int] = None
+    provider_id: Optional[str] = None
 
 class JobResponse(JobBase):
-    id: int
-    customer_id: int
-    worker_id: Optional[int] = None
-    agency_id: Optional[int] = None
+    id: str
+    customer_id: str
+    worker_id: Optional[str] = None
+    agency_id: Optional[str] = None
     status: str
     otp: str
     created_at: datetime
     accepted_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True
-
 # --- Admin ---
 class AdminStatsResponse(BaseModel):
     total_users: int
@@ -111,8 +102,8 @@ class AdminStatsResponse(BaseModel):
     pending_partners: int
 
 class AdminPartnerProfileResponse(BaseModel):
-    id: int
-    user_id: int
+    id: str
+    user_id: str
     bio: Optional[str] = None
     business_type: str
     business_name: Optional[str] = None
@@ -127,28 +118,22 @@ class AdminPartnerProfileResponse(BaseModel):
     # We include user details as a nested dict for easy display
     user: Optional[UserResponse] = None
 
-    class Config:
-        from_attributes = True
-
 # --- Reviews ---
 class ReviewBase(BaseModel):
     rating: int # 1-5
     comment: Optional[str] = None
 
 class ReviewCreate(ReviewBase):
-    job_id: int
-    partner_id: int
+    job_id: str
+    partner_id: str
 
 class ReviewResponse(ReviewBase):
-    id: int
-    job_id: int
-    reviewer_id: int
-    partner_id: int
+    id: str
+    job_id: str
+    reviewer_id: str
+    partner_id: str
     created_at: datetime
     
-    class Config:
-        from_attributes = True
-
 # --- Promo Codes ---
 class PromoValidateRequest(BaseModel):
     code: str

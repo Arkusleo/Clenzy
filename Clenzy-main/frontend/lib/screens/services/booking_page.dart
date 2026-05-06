@@ -3,6 +3,8 @@ import '../../services/job_service_client.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../services/payment_service.dart';
 import 'package:flutter/foundation.dart';
+import '../../services/auth_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:ui';
 
 class BookingPage extends StatefulWidget {
@@ -465,7 +467,15 @@ class _BookingPageState extends State<BookingPage> {
 
   void _confirmBooking() async {
     setState(() => _isProcessingPayment = true);
+    final storage = const FlutterSecureStorage();
+    final userId = await storage.read(key: 'userId') ?? '';
     String jobIdStr;
+    final selectedDate = DateTime.now().add(Duration(days: _selectedDateIndex));
+    final dateStr = '${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][selectedDate.weekday - 1]}, ${selectedDate.day}';
+    final timeStr = _timeSlots[_selectedTimeIndex];
+    final providerName = widget.provider['name'];
+    final customDesc = 'SCHEDULED: $dateStr at $timeStr|PROVIDER: $providerName';
+
     try {
       jobIdStr = await _jobServiceClient.createJob(
         serviceType: widget.categoryName,
@@ -473,8 +483,8 @@ class _BookingPageState extends State<BookingPage> {
         workersNeeded: 1,
         latitude: 0.0,
         longitude: 0.0,
-        address: 'Home - house address placeholder',
-        description: '',
+        address: 'Home',
+        description: customDesc,
         providerId: widget.provider['id'],
       );
     } catch (e) {
@@ -485,7 +495,7 @@ class _BookingPageState extends State<BookingPage> {
       return;
     }
 
-    final jobId = int.tryParse(jobIdStr) ?? 1;
+    final String jobId = jobIdStr;
     final paymentMethod = _paymentMethods[_selectedPaymentIndex]['name'];
 
     if (paymentMethod != 'Cash') {
@@ -496,7 +506,7 @@ class _BookingPageState extends State<BookingPage> {
               amount: _totalPrice.toInt(),
               currency: 'INR',
               jobId: jobId,
-              userId: 1,
+              userId: userId,
               context: context,
             );
             if (mounted) setState(() => _isProcessingPayment = false);
@@ -507,7 +517,7 @@ class _BookingPageState extends State<BookingPage> {
             }
           }
         } else if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
-          final order = await _paymentService.createOrder(_totalPrice.toInt(), 'INR', jobId, 1);
+          final order = await _paymentService.createOrder(_totalPrice.toInt(), 'INR', jobId, userId);
           final options = {
             'key': order!['key'],
             'amount': (order['amount'] * 100).toInt(),
@@ -575,7 +585,7 @@ class _BookingPageState extends State<BookingPage> {
     );
   }
 
-  void _showDesktopPaymentNotice(int jobId) {
+  void _showDesktopPaymentNotice(String jobId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

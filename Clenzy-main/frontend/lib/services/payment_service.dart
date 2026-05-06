@@ -35,8 +35,8 @@ class PaymentService {
   Future<String?> makeWebPayment({
     required int amount,
     required String currency,
-    required int jobId,
-    required int userId,
+    required String jobId,
+    required String userId,
     required dynamic context,
   }) async {
     try {
@@ -65,8 +65,8 @@ class PaymentService {
           ? (orderData['amount'] as int) * 100 
           : ((orderData['amount'] as double).toInt()) * 100,
         orderId: orderData['orderId'].toString(),
-        name: 'Awesome App',
-        description: 'Job Payment #$jobId',
+        name: 'Clenzy',
+        description: 'Payment for Booking #$jobId',
         context: context,
       );
 
@@ -94,7 +94,7 @@ class PaymentService {
     }
   }
 
-  Future<Map<String, dynamic>?> createOrder(int amount, String currency, int jobId, int userId) async {
+  Future<Map<String, dynamic>?> createOrder(int amount, String currency, String jobId, String userId) async {
     try {
       final url = Uri.parse('$baseUrl/api/payment/create-order');
       final response = await http.post(

@@ -44,7 +44,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
     }
   }
 
-  Future<void> _deleteAddress(int id) async {
+  Future<void> _deleteAddress(String id) async {
     try {
       await _userService.deleteAddress(id);
       _loadAddresses(); // Refresh list after successful delete
@@ -60,7 +60,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
     }
   }
 
-  Future<void> _setAsDefault(int id) async {
+  Future<void> _setAsDefault(String id) async {
     try {
       await _userService.updateAddress(id, isDefault: true);
       _loadAddresses();
@@ -185,7 +185,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
 
   Widget _buildAddressCard(Map<String, dynamic> address) {
     final bool isDefault = address['is_default'] ?? false;
-    final int id = address['id'];
+    final String id = address['id'];
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -295,7 +295,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
     );
   }
 
-  void _showDeleteConfirmation(int id) {
+  void _showDeleteConfirmation(String id) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

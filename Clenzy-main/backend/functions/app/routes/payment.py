@@ -3,9 +3,11 @@ from datetime import datetime
 import razorpay
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
-from .. import models, schemas, auth
-from ..database import get_db
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from bson import ObjectId
+
+from .. import schemas, auth
+from ..database import get_database
 
 router = APIRouter()
 
@@ -26,8 +28,8 @@ def calculate_payout(amount: float):
 class OrderRequest(BaseModel):
     amount: float
     currency: str = 'INR'
-    job_id: int
-    user_id: int
+    job_id: str
+    user_id: str
 
 class VerifyPaymentRequest(BaseModel):
     razorpay_order_id: str
@@ -38,134 +40,136 @@ class RefundRequest(BaseModel):
     razorpay_payment_id: str
 
 @router.post("/create-order")
-async def create_order(request: OrderRequest, db: Session = Depends(get_db)):
+async def create_order(request: OrderRequest, db: AsyncIOMotorDatabase = Depends(get_database)):
     try:
-        user = db.query(models.User).filter(models.User.id == request.user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        user_obj_id = ObjectId(request.user_id)
+        job_obj_id = ObjectId(request.job_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid IDs")
+        
+    user = await db.users.find_one({"_id": user_obj_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-        job = db.query(models.Job).filter(models.Job.id == request.job_id).first()
-        if not job:
-            raise HTTPException(status_code=404, detail="Job not found")
+    job = await db.jobs.find_one({"_id": job_obj_id})
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
 
-        amount_paise = int(request.amount * 100)
-        data = {
-            "amount": amount_paise,
-            "currency": request.currency,
-            "receipt": f"job_{request.job_id}_user_{request.user_id}"
-        }
-        order = razorpay_client.order.create(data=data)
+    amount_paise = int(request.amount * 100)
+    data = {
+        "amount": amount_paise,
+        "currency": request.currency,
+        "receipt": f"job_{request.job_id}"[:40]
+    }
+    order = razorpay_client.order.create(data=data)
 
-        new_payment = models.Payment(
-            job_id=request.job_id,
-            user_id=request.user_id,
-            razorpay_order_id=order['id'],
-            amount=request.amount,
-            currency=request.currency,
-            payment_status=PAYMENT_PENDING
-        )
-        db.add(new_payment)
-        db.commit()
-        db.refresh(new_payment)
+    new_payment = {
+        "job_id": request.job_id,
+        "user_id": request.user_id,
+        "razorpay_order_id": order['id'],
+        "amount": request.amount,
+        "currency": request.currency,
+        "payment_status": PAYMENT_PENDING,
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.payments.insert_one(new_payment)
 
-        return {
-            "orderId": order['id'],
-            "amount": request.amount,
-            "currency": request.currency,
-            "key": RAZORPAY_KEY_ID
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    return {
+        "orderId": order['id'],
+        "amount": request.amount,
+        "currency": request.currency,
+        "key": RAZORPAY_KEY_ID
+    }
 
 @router.post("/verify-payment")
-async def verify_payment(request: VerifyPaymentRequest, db: Session = Depends(get_db)):
+async def verify_payment(request: VerifyPaymentRequest, db: AsyncIOMotorDatabase = Depends(get_database)):
+    payment = await db.payments.find_one({"razorpay_order_id": request.razorpay_order_id})
+
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment record not found")
+
+    if payment.get("payment_status") == PAYMENT_SUCCESS:
+        return {"status": "already_verified"}
+
+    params_dict = {
+        'razorpay_order_id': request.razorpay_order_id,
+        'razorpay_payment_id': request.razorpay_payment_id,
+        'razorpay_signature': request.razorpay_signature
+    }
+
     try:
-        payment = db.query(models.Payment).filter(
-            models.Payment.razorpay_order_id == request.razorpay_order_id
-        ).first()
-
-        if not payment:
-            raise HTTPException(status_code=404, detail="Payment record not found")
-
-        if payment.payment_status == PAYMENT_SUCCESS:
-            return {"status": "already_verified"}
-
-        params_dict = {
-            'razorpay_order_id': request.razorpay_order_id,
-            'razorpay_payment_id': request.razorpay_payment_id,
-            'razorpay_signature': request.razorpay_signature
-        }
-
-        try:
-            razorpay_client.utility.verify_payment_signature(params_dict)
-        except Exception:
-            payment.payment_status = PAYMENT_FAILED
-            db.commit()
-            raise HTTPException(status_code=400, detail="Invalid payment signature")
-
-        payment.payment_status = PAYMENT_SUCCESS
-        payment.razorpay_payment_id = request.razorpay_payment_id
-        payment.razorpay_signature = request.razorpay_signature
-        
-        platform_fee, worker_amount = calculate_payout(payment.amount)
-        payment.platform_fee = platform_fee
-        payment.worker_amount = worker_amount
-        
-        payment_details = razorpay_client.payment.fetch(request.razorpay_payment_id)
-        payment.payment_method = payment_details.get("method")
-        
-        # We need worker_id to create payout. Since job_id might point to a worker:
-        job = db.query(models.Job).filter(models.Job.id == payment.job_id).first()
-        worker_id = job.worker_id if job and job.worker_id else payment.user_id
-        
-        payout = models.Payout(
-            worker_id=worker_id,
-            payment_id=payment.id,
-            worker_amount=worker_amount,
-            payout_status="pending"
+        razorpay_client.utility.verify_payment_signature(params_dict)
+    except Exception:
+        await db.payments.update_one(
+            {"_id": payment["_id"]},
+            {"$set": {"payment_status": PAYMENT_FAILED}}
         )
-        db.add(payout)
-        db.commit()
+        raise HTTPException(status_code=400, detail="Invalid payment signature")
+
+    platform_fee, worker_amount = calculate_payout(payment.get("amount", 0))
+    
+    payment_details = razorpay_client.payment.fetch(request.razorpay_payment_id)
+    method = payment_details.get("method")
+    
+    update_data = {
+        "payment_status": PAYMENT_SUCCESS,
+        "razorpay_payment_id": request.razorpay_payment_id,
+        "razorpay_signature": request.razorpay_signature,
+        "platform_fee": platform_fee,
+        "worker_amount": worker_amount,
+        "payment_method": method
+    }
+    
+    await db.payments.update_one({"_id": payment["_id"]}, {"$set": update_data})
+    
+    job_id = payment.get("job_id")
+    try:
+        job_obj_id = ObjectId(job_id)
+        job = await db.jobs.find_one({"_id": job_obj_id})
+    except:
+        job = None
         
-        return {
-            "status": "success",
-            "message": "Payment verified successfully",
-            "payment_id": payment.id,
-            "worker_amount": worker_amount
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    worker_id = job.get("worker_id") if job and job.get("worker_id") else payment.get("user_id")
+    
+    payout = {
+        "worker_id": worker_id,
+        "payment_id": str(payment["_id"]),
+        "worker_amount": worker_amount,
+        "payout_status": "pending",
+        "created_at": datetime.utcnow()
+    }
+    await db.payouts.insert_one(payout)
+    
+    return {
+        "status": "success",
+        "message": "Payment verified successfully",
+        "payment_id": str(payment["_id"]),
+        "worker_amount": worker_amount
+    }
 
 @router.post("/refund")
-def refund(request: RefundRequest, db: Session = Depends(get_db)):
+async def refund(request: RefundRequest, db: AsyncIOMotorDatabase = Depends(get_database)):
+    payment = await db.payments.find_one({"razorpay_payment_id": request.razorpay_payment_id})
+    
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    
+    if payment.get("payment_status") not in [PAYMENT_SUCCESS, PAYMENT_PENDING]:
+        raise HTTPException(status_code=400, detail="Cannot refund payment in current status")
+    
     try:
-        payment = db.query(models.Payment).filter(
-            models.Payment.razorpay_payment_id == request.razorpay_payment_id
-        ).first()
-        
-        if not payment:
-            raise HTTPException(status_code=404, detail="Payment not found")
-        
-        if payment.payment_status not in [PAYMENT_SUCCESS, PAYMENT_PENDING]:
-            raise HTTPException(status_code=400, detail="Cannot refund payment in current status")
-        
         razorpay_client.payment.refund(request.razorpay_payment_id)
-        payment.payment_status = "refunded"
-        db.commit()
-            
-        return {
-            "status": "success",
-            "message": "Refund initiated successfully",
-            "payment_id": payment.id
-        }
-    except HTTPException:
-        raise
     except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=f"Refund failed: {str(e)}")
+        
+    await db.payments.update_one(
+        {"_id": payment["_id"]},
+        {"$set": {"payment_status": "refunded"}}
+    )
+        
+    return {
+        "status": "success",
+        "message": "Refund initiated successfully",
+        "payment_id": str(payment["_id"])
+    }

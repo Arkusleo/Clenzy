@@ -43,3 +43,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Additional Exclusions
+frontend/build/
+frontend/android/
+venv/
+.venv/
+__pycache__/
+*.db
+*.sqlite3
+.env
+backend/functions/.env
+test pro/node_modules/

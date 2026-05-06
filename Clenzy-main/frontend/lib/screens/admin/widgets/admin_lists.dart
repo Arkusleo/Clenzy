@@ -326,3 +326,96 @@ class AdminWorkerPerformanceList extends StatelessWidget {
     );
   }
 }
+
+class AdminRecentUsersList extends StatelessWidget {
+  final VoidCallback? onViewAll;
+  const AdminRecentUsersList({super.key, this.onViewAll});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: ThemeColors.darkCard,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: ThemeColors.borderWhite),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Recent Users',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              GestureDetector(
+                onTap: onViewAll,
+                child: const Text(
+                  'View All',
+                  style: TextStyle(color: ThemeColors.primaryBlue, fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildUserItem('Alice Johnson', 'alice.j@example.com', 'Customer'),
+          const SizedBox(height: 20),
+          _buildUserItem('Bob Williams', 'bob.w@example.com', 'Worker'),
+          const SizedBox(height: 20),
+          _buildUserItem('Charlie Brown', 'charlie.b@example.com', 'Customer'),
+          const SizedBox(height: 20),
+          _buildUserItem('Diana Prince', 'diana.p@example.com', 'Customer'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserItem(String name, String email, String role) {
+    return Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: Colors.white.withAlpha(20),
+          radius: 18,
+          child: Text(
+            name.isNotEmpty ? name[0].toUpperCase() : 'U',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+              Text(email, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: role.toLowerCase() == 'worker' 
+                ? const Color(0xFF10B981).withAlpha(20)
+                : const Color(0xFF3366FF).withAlpha(20),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            role,
+            style: TextStyle(
+              color: role.toLowerCase() == 'worker' ? const Color(0xFF10B981) : const Color(0xFF3366FF),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

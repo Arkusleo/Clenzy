@@ -235,7 +235,91 @@ class _AdminOverviewScreenState extends State<_AdminOverviewScreen> {
                   const SizedBox(height: 40),
                   _buildStatCardsRow(),
                   const SizedBox(height: 24),
-                  // Row 1: Area Chart (flex 2) + Recent Bookings (flex 1)
+                  _buildContent(),
+                ],
+              ),
+            ),
+         ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    final query = _searchTopic.toLowerCase().trim();
+    if (query == 'users' || query == 'user') {
+      return _buildUsersContent();
+    } else if (query == 'workers' || query == 'worker') {
+      return _buildWorkersContent();
+    } else {
+      return _buildDefaultContent();
+    }
+  }
+
+  Widget _buildUsersContent() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 3,
+          child: SizedBox(
+            height: 380,
+            child: AdminUsersDonutChart(
+              totalUsers: _stats?['total_users'] ?? 3672,
+              totalWorkers: _stats?['total_partners'] ?? 892,
+            ),
+          ),
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          flex: 4,
+          child: SizedBox(
+            height: 380,
+            child: AdminRecentUsersList(
+              onViewAll: () {
+                // Navigate to the main Users tab (index 1)
+                final state = context.findAncestorStateOfType<_AdminDashboardState>();
+                state?.setState(() {
+                  state._currentIndex = 1;
+                });
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWorkersContent() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 4,
+          child: SizedBox(
+            height: 380,
+            child: AdminWorkerPerformanceList(
+              onViewAll: () => _showAllWorkersModal(context),
+            ),
+          ),
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          flex: 3,
+          child: SizedBox(
+            height: 380,
+            child: AdminTopServicesList(
+              onViewAll: () => _showAllServicesModal(context),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDefaultContent() {
+    return Column(
+      children: [
+        // Row 1: Area Chart (flex 2) + Recent Bookings (flex 1)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -296,11 +380,7 @@ class _AdminOverviewScreenState extends State<_AdminOverviewScreen> {
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-         ],
-      ),
+      ],
     );
   }
 

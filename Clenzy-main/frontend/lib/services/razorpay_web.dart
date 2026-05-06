@@ -125,6 +125,7 @@ Future<Map<String, String>?> createWebOrder({
         rzp.open();
       } catch(e) {
         console.error("Razorpay open error:", e);
+        throw e;
       }
     ''']);
   } catch (e) {

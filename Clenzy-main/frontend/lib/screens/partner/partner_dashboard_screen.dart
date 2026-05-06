@@ -410,20 +410,22 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
   Widget _buildJobCard(Map<String, dynamic> job) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE8ECF4)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(5),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+      child: GestureDetector(
+        onTap: () => _showJobDetails(job),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE8ECF4)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(5),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
         child: Row(
           children: [
             // Icon
@@ -524,6 +526,160 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
           ],
         ),
       ),
+      ),
+    );
+  }
+
+  void _showJobDetails(Map<String, dynamic> job) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Color(job['iconColor']).withAlpha(26),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(job['icon'], color: Color(job['iconColor']), size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      job['title'],
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1A1D26),
+                      ),
+                    ),
+                  ],
+                ),
+                if (job['isPriority'] == true)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF9800).withAlpha(26),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'PRIORITY',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFFF9800),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _buildDetailRow(Icons.access_time_filled, 'Scheduled Time', job['time']),
+            const SizedBox(height: 16),
+            _buildDetailRow(Icons.location_on, 'Customer Address', job['address']),
+            const SizedBox(height: 16),
+            _buildDetailRow(Icons.directions_car, 'Distance', job['distance']),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: const BorderSide(color: Color(0xFFE8ECF4)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A1D26),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // Navigate to Jobs tab (index 1)
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF3366FF),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'View Details',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10), // extra padding for bottom safe area
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FC),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 18, color: const Color(0xFF3366FF)),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey[500]),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(fontSize: 14, color: Color(0xFF1A1D26), fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

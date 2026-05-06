@@ -1,18 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from .. import models, schemas, auth
-from ..database import get_db
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from .. import schemas, auth
+from ..database import get_database
 
 router = APIRouter()
 
 @router.get("/balance")
-def get_balance(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
-    wallet = db.query(models.Wallet).filter(models.Wallet.user_id == current_user.id).first()
+async def get_balance(db: AsyncIOMotorDatabase = Depends(get_database), current_user: dict = Depends(auth.get_current_user)):
+    wallet = await db.wallets.find_one({"user_id": current_user["id"]})
     if not wallet:
         return {"balance": 0.0, "total_earnings": 0.0}
-    return {"balance": wallet.balance, "total_earnings": wallet.total_earnings}
+    return {"balance": wallet.get("balance", 0.0), "total_earnings": wallet.get("total_earnings", 0.0)}
 
 @router.get("/transactions")
-def get_transactions(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
-    transactions = db.query(models.Transaction).filter(models.Transaction.user_id == current_user.id).order_by(models.Transaction.created_at.desc()).all()
+async def get_transactions(db: AsyncIOMotorDatabase = Depends(get_database), current_user: dict = Depends(auth.get_current_user)):
+    cursor = db.transactions.find({"user_id": current_user["id"]}).sort("created_at", -1)
+    transactions = []
+    async for tx in cursor:
+        tx["id"] = str(tx["_id"])
+        transactions.append(tx)
     return transactions

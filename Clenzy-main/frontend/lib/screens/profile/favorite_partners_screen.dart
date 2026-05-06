@@ -36,7 +36,7 @@ class _FavoritePartnersScreenState extends State<FavoritePartnersScreen> {
     }
   }
 
-  Future<void> _removeFavorite(int id) async {
+  Future<void> _removeFavorite(String id) async {
     try {
       await _userService.removeFavoritePartner(id);
       _loadFavorites(); // Refresh list

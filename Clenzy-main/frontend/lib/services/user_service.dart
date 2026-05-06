@@ -93,7 +93,7 @@ class UserService {
   }
 
   Future<Map<String, dynamic>> updateAddress(
-    int id, {
+    String id, {
     String? label,
     String? fullAddress,
     String? city,
@@ -122,7 +122,7 @@ class UserService {
     }
   }
 
-  Future<void> deleteAddress(int id) async {
+  Future<void> deleteAddress(String id) async {
     final response = await http.delete(
       Uri.parse('$apiUrl/users/me/addresses/$id'),
       headers: await _getHeaders(),
@@ -146,7 +146,7 @@ class UserService {
     }
   }
 
-  Future<void> addFavoritePartner(int partnerId) async {
+  Future<void> addFavoritePartner(String partnerId) async {
     final response = await http.post(
       Uri.parse('$apiUrl/users/me/favorites/$partnerId'),
       headers: await _getHeaders(),
@@ -156,7 +156,7 @@ class UserService {
     }
   }
 
-  Future<void> removeFavoritePartner(int partnerId) async {
+  Future<void> removeFavoritePartner(String partnerId) async {
     final response = await http.delete(
       Uri.parse('$apiUrl/users/me/favorites/$partnerId'),
       headers: await _getHeaders(),
@@ -179,8 +179,8 @@ class UserService {
 
   // --- Reviews ---
   Future<bool> submitReview(
-    int jobId,
-    int providerId,
+    String jobId,
+    String providerId,
     int rating,
     String? comment,
   ) async {
@@ -197,7 +197,7 @@ class UserService {
     return response.statusCode == 200 || response.statusCode == 201;
   }
 
-  Future<List<dynamic>> getProviderReviews(int providerId) async {
+  Future<List<dynamic>> getProviderReviews(String providerId) async {
     final response = await http.get(
       Uri.parse('$apiUrl/users/reviews/$providerId'),
       headers: await _getHeaders(),

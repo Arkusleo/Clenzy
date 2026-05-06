@@ -155,6 +155,24 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       final formattedJobs = jobs.map((raw) {
                         final status =
                             (raw['status'] as String?)?.toUpperCase() ?? 'PENDING';
+                        
+                        final desc = raw['description'] as String? ?? '';
+                        String workerName = raw['provider_id'] != null ? 'Assigned Pro' : 'Locating Pro...';
+                        String dateTime = _formatDate(raw['created_at']);
+                        if (desc.contains('SCHEDULED:')) {
+                          try {
+                            final parts = desc.split('|');
+                            for (var part in parts) {
+                              if (part.startsWith('SCHEDULED: ')) {
+                                dateTime = part.substring('SCHEDULED: '.length);
+                              }
+                              if (part.startsWith('PROVIDER: ')) {
+                                workerName = part.substring('PROVIDER: '.length);
+                              }
+                            }
+                          } catch (_) {}
+                        }
+
                         return {
                           ...raw,
                           'status': status,
@@ -162,13 +180,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                   raw['service_type'].toString().isEmpty
                               ? 'Service Booking'
                               : raw['service_type'].toString().toUpperCase(),
-                          'address': raw['address'] ?? 'Platform Match',
-                          'worker': raw['provider_id'] != null
-                              ? 'Assigned Pro'
-                              : 'Locating Pro...',
-                          'statusColor': _getStatusColor(status).toARGB32(),
+                          'address': raw['address'] ?? 'Home',
+                          'worker': workerName,
+                          'statusColor': _getStatusColor(status).value,
                           'icon': _getIconForService(raw['service_type']),
-                          'dateTime': _formatDate(raw['created_at']),
+                          'dateTime': dateTime,
                           'rating': raw['rating'],
                         };
                       }).toList();
@@ -560,8 +576,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           try {
                             // Using dummy IDs since mock data doesn't have real IDs
                             await _userService.submitReview(
-                              job['id'] ?? 1,
-                              job['provider_id'] ?? 2,
+                              job['id'] ?? '1',
+                              job['provider_id'] ?? '2',
                               currentRating,
                               commentController.text,
                             );

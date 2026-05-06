@@ -1,300 +1,344 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
-from sqlalchemy.orm import Session
-from .. import models, schemas, auth
-from ..database import get_db
-from datetime import timedelta
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from bson import ObjectId
+from .. import schemas, auth
+from ..database import get_database, str_object_id
+from datetime import timedelta, datetime
 
 router = APIRouter()
 
 @router.post("/signup", response_model=schemas.UserResponse)
-def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
+async def signup(user: schemas.UserCreate, db: AsyncIOMotorDatabase = Depends(get_database)):
+    if await db.users.find_one({"email": user.email}):
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    db_phone = db.query(models.User).filter(models.User.phone == user.phone).first()
-    if db_phone:
+    if await db.users.find_one({"phone": user.phone}):
         raise HTTPException(status_code=400, detail="Phone number already registered")
         
     hashed_password = auth.get_password_hash(user.password)
-    new_user = models.User(
-        full_name=user.full_name,
-        email=user.email,
-        phone=user.phone,
-        hashed_password=hashed_password,
-        role=user.role or "user"
-    )
-    db.add(new_user)
-    db.flush()  # Get new_user.id
+    new_user = {
+        "full_name": user.full_name,
+        "email": user.email,
+        "phone": user.phone,
+        "hashed_password": hashed_password,
+        "role": user.role or "user",
+        "is_active": True,
+        "is_verified": False,
+        "is_online": False,
+        "created_at": datetime.utcnow(),
+        "favorite_partners": []
+    }
+    
+    result = await db.users.insert_one(new_user)
+    user_id_str = str(result.inserted_id)
+    new_user["id"] = user_id_str
     
     # Create empty wallet for user
-    new_wallet = models.Wallet(user_id=new_user.id)
-    db.add(new_wallet)
+    await db.wallets.insert_one({
+        "user_id": user_id_str,
+        "balance": 0.0,
+        "transactions": []
+    })
     
     # If the user signed up as a worker, prepopulate their partner profile
-    if new_user.role == "worker":
-        # Check if skills exists
+    if new_user["role"] == "worker":
         skills_list = user.skills if user.skills and isinstance(user.skills, list) else []
-        new_partner = models.PartnerProfile(
-            user_id=new_user.id,
-            business_name=user.profession if user.profession else None,
-            custom_skills=skills_list
-        )
-        db.add(new_partner)
-    
-    db.commit()
-    db.refresh(new_user)
+        await db.partner_profiles.insert_one({
+            "user_id": user_id_str,
+            "business_type": "individual",
+            "business_name": user.profession if user.profession else None,
+            "custom_skills": skills_list,
+            "city": "",
+            "service_radius": 10.0,
+            "approval_status": "pending",
+            "is_profile_complete": False,
+            "average_rating": 0.0,
+            "total_reviews": 0,
+            "use_same_as_profile_name": True
+        })
     
     return new_user
 
 @router.post("/login", response_model=schemas.Token)
-def login(user_credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == user_credentials.email).first()
+async def login(user_credentials: schemas.LoginRequest, db: AsyncIOMotorDatabase = Depends(get_database)):
+    user = await db.users.find_one({"email": user_credentials.email})
     
-    if not user or not auth.verify_password(user_credentials.password, user.hashed_password):
+    if not user or not auth.verify_password(user_credentials.password, user["hashed_password"]):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials"
         )
         
+    user_id_str = str(user["_id"])
     access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth.create_access_token(
-        data={"email": user.email, "role": user.role, "user_id": user.id}, 
+        data={"email": user["email"], "role": user.get("role", "user"), "user_id": user_id_str}, 
         expires_delta=access_token_expires
     )
     
     is_profile_complete = False
-    if user.role in ["worker", "agency_partner", "individual_partner"] and user.partner_profile:
-        is_profile_complete = user.partner_profile.is_profile_complete
+    if user.get("role") in ["worker", "agency_partner", "individual_partner"]:
+        partner = await db.partner_profiles.find_one({"user_id": user_id_str})
+        if partner:
+            is_profile_complete = partner.get("is_profile_complete", False)
 
     return {
         "access_token": access_token, 
         "token_type": "bearer", 
-        "user_id": user.id, 
-        "role": user.role,
+        "user_id": user_id_str, 
+        "role": user.get("role", "user"),
         "is_profile_complete": is_profile_complete
     }
+
 @router.get("/me", response_model=schemas.UserResponse)
-def get_current_user_profile(current_user: models.User = Depends(auth.get_current_user)):
+async def get_current_user_profile(current_user: dict = Depends(auth.get_current_user)):
     return current_user
 
 @router.put("/me", response_model=schemas.UserResponse)
-def update_current_user_profile(
+async def update_current_user_profile(
     user_update: schemas.UserUpdate, 
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(auth.get_current_user)
 ):
-    if user_update.email and user_update.email != current_user.email:
-        # Check if email is already taken
-        if db.query(models.User).filter(models.User.email == user_update.email).first():
+    update_data = {}
+    if user_update.email and user_update.email != current_user["email"]:
+        if await db.users.find_one({"email": user_update.email}):
             raise HTTPException(status_code=400, detail="Email already registered")
-        current_user.email = user_update.email
+        update_data["email"] = user_update.email
     
     if user_update.full_name is not None:
-        current_user.full_name = user_update.full_name
+        update_data["full_name"] = user_update.full_name
         
     if user_update.phone is not None:
-        current_user.phone = user_update.phone
+        update_data["phone"] = user_update.phone
         
-    db.commit()
-    db.refresh(current_user)
+    if update_data:
+        await db.users.update_one({"_id": ObjectId(current_user["id"])}, {"$set": update_data})
+        current_user.update(update_data)
+        
     return current_user
 
-# --- Addresses Endpoints ---
-
 @router.post("/me/complete_profile", response_model=schemas.UserResponse)
-def complete_partner_profile(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+async def complete_partner_profile(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(auth.get_current_user)
 ):
-    if not current_user.partner_profile:
+    result = await db.partner_profiles.update_one(
+        {"user_id": current_user["id"]},
+        {"$set": {"is_profile_complete": True}}
+    )
+    if result.matched_count == 0:
         raise HTTPException(status_code=400, detail="Partner profile not found")
         
-    current_user.partner_profile.is_profile_complete = True
-    db.commit()
-    db.refresh(current_user)
     return current_user
 
 # --- Addresses Endpoints ---
 
 @router.post("/me/addresses", response_model=schemas.AddressResponse)
-def create_address(
+async def create_address(
     address: schemas.AddressCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(auth.get_current_user)
 ):
     if address.is_default:
-        # Unset other default addresses
-        db.query(models.Address).filter(
-            models.Address.user_id == current_user.id,
-            models.Address.is_default == True
-        ).update({"is_default": False})
+        await db.addresses.update_many(
+            {"user_id": current_user["id"], "is_default": True},
+            {"$set": {"is_default": False}}
+        )
         
-    new_address = models.Address(
-        **address.model_dump(),
-        user_id=current_user.id
-    )
-    db.add(new_address)
-    db.commit()
-    db.refresh(new_address)
+    new_address = address.model_dump()
+    new_address["user_id"] = current_user["id"]
+    new_address["created_at"] = datetime.utcnow()
     
-    # If this is the user's first address, make it default automatically
+    result = await db.addresses.insert_one(new_address)
+    new_address["id"] = str(result.inserted_id)
+    
     if not address.is_default:
-        total_addresses = db.query(models.Address).filter(models.Address.user_id == current_user.id).count()
+        total_addresses = await db.addresses.count_documents({"user_id": current_user["id"]})
         if total_addresses == 1:
-            new_address.is_default = True
-            db.commit()
-            db.refresh(new_address)
+            await db.addresses.update_one({"_id": result.inserted_id}, {"$set": {"is_default": True}})
+            new_address["is_default"] = True
             
     return new_address
 
 @router.get("/me/addresses", response_model=List[schemas.AddressResponse])
-def get_addresses(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+async def get_addresses(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(auth.get_current_user)
 ):
-    return db.query(models.Address).filter(models.Address.user_id == current_user.id).all()
+    cursor = db.addresses.find({"user_id": current_user["id"]})
+    addresses = []
+    async for addr in cursor:
+        addr["id"] = str(addr["_id"])
+        addresses.append(addr)
+    return addresses
 
 @router.put("/me/addresses/{address_id}", response_model=schemas.AddressResponse)
-def update_address(
-    address_id: int,
+async def update_address(
+    address_id: str,
     address_update: schemas.AddressUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(auth.get_current_user)
 ):
-    db_address = db.query(models.Address).filter(
-        models.Address.id == address_id,
-        models.Address.user_id == current_user.id
-    ).first()
-    
+    try:
+        obj_id = ObjectId(address_id)
+    except:
+        raise HTTPException(status_code=404, detail="Address not found")
+        
+    db_address = await db.addresses.find_one({"_id": obj_id, "user_id": current_user["id"]})
     if not db_address:
         raise HTTPException(status_code=404, detail="Address not found")
         
     update_data = address_update.model_dump(exclude_unset=True)
     
     if update_data.get("is_default"):
-        # Unset other default addresses
-        db.query(models.Address).filter(
-            models.Address.user_id == current_user.id,
-            models.Address.is_default == True,
-            models.Address.id != address_id
-        ).update({"is_default": False})
+        await db.addresses.update_many(
+            {"user_id": current_user["id"], "is_default": True, "_id": {"$ne": obj_id}},
+            {"$set": {"is_default": False}}
+        )
         
-    for key, value in update_data.items():
-        setattr(db_address, key, value)
+    if update_data:
+        await db.addresses.update_one({"_id": obj_id}, {"$set": update_data})
+        db_address.update(update_data)
         
-    db.commit()
-    db.refresh(db_address)
+    db_address["id"] = str(db_address["_id"])
     return db_address
 
 @router.delete("/me/addresses/{address_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_address(
-    address_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+async def delete_address(
+    address_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(auth.get_current_user)
 ):
-    db_address = db.query(models.Address).filter(
-        models.Address.id == address_id,
-        models.Address.user_id == current_user.id
-    ).first()
-    
+    try:
+        obj_id = ObjectId(address_id)
+    except:
+        raise HTTPException(status_code=404, detail="Address not found")
+        
+    db_address = await db.addresses.find_one({"_id": obj_id, "user_id": current_user["id"]})
     if not db_address:
         raise HTTPException(status_code=404, detail="Address not found")
         
-    was_default = db_address.is_default
+    was_default = db_address.get("is_default", False)
+    await db.addresses.delete_one({"_id": obj_id})
     
-    db.delete(db_address)
-    db.commit()
-    
-    # If we deleted the default address, set another one as default if any exist
     if was_default:
-        another = db.query(models.Address).filter(models.Address.user_id == current_user.id).first()
+        another = await db.addresses.find_one({"user_id": current_user["id"]})
         if another:
-            another.is_default = True
-            db.commit()
+            await db.addresses.update_one({"_id": another["_id"]}, {"$set": {"is_default": True}})
 
 # --- Presence ---
 @router.patch("/me/presence", response_model=schemas.UserResponse)
-def update_presence(
+async def update_presence(
     is_online: bool,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(auth.get_current_user)
 ):
-    current_user.is_online = is_online
-    db.commit()
-    db.refresh(current_user)
+    await db.users.update_one({"_id": ObjectId(current_user["id"])}, {"$set": {"is_online": is_online}})
+    current_user["is_online"] = is_online
     return current_user
 
 # --- Reviews ---
 @router.post("/reviews", response_model=schemas.ReviewResponse)
-def create_review(
+async def create_review(
     review: schemas.ReviewCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(auth.get_current_user)
 ):
-    # Ensure job exists and is completed
-    job = db.query(models.Job).filter(models.Job.id == review.job_id).first()
-    if not job or job.status != "completed":
+    try:
+        job_obj_id = ObjectId(review.job_id)
+    except:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    job = await db.jobs.find_one({"_id": job_obj_id})
+    if not job or job.get("status") != "completed":
         raise HTTPException(status_code=400, detail="Job must be completed to leave a review")
         
-    partner_profile = db.query(models.PartnerProfile).filter(models.PartnerProfile.user_id == review.partner_id).first()
+    partner_profile = await db.partner_profiles.find_one({"user_id": review.partner_id})
     if not partner_profile:
         raise HTTPException(status_code=404, detail="Partner not found")
         
-    new_review = models.Review(
-        **review.model_dump(),
-        reviewer_id=current_user.id
+    new_review = review.model_dump()
+    new_review["reviewer_id"] = current_user["id"]
+    new_review["created_at"] = datetime.utcnow()
+    
+    result = await db.reviews.insert_one(new_review)
+    new_review["id"] = str(result.inserted_id)
+    
+    total = partner_profile.get("total_reviews", 0)
+    current_avg = partner_profile.get("average_rating", 0.0)
+    new_avg = ((current_avg * total) + review.rating) / (total + 1)
+    
+    await db.partner_profiles.update_one(
+        {"user_id": review.partner_id},
+        {"$set": {"average_rating": new_avg, "total_reviews": total + 1}}
     )
-    db.add(new_review)
     
-    # Update average rating
-    total = partner_profile.total_reviews
-    current_avg = partner_profile.average_rating
-    
-    partner_profile.average_rating = ((current_avg * total) + review.rating) / (total + 1)
-    partner_profile.total_reviews += 1
-    
-    db.commit()
-    db.refresh(new_review)
     return new_review
 
 @router.get("/reviews/{partner_id}", response_model=List[schemas.ReviewResponse])
-def get_partner_reviews(
-    partner_id: int,
-    db: Session = Depends(get_db)
+async def get_partner_reviews(
+    partner_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    return db.query(models.Review).filter(models.Review.partner_id == partner_id).all()
+    cursor = db.reviews.find({"partner_id": partner_id})
+    reviews = []
+    async for rev in cursor:
+        rev["id"] = str(rev["_id"])
+        reviews.append(rev)
+    return reviews
 
 # --- Favorites ---
 @router.post("/me/favorites/{partner_id}")
-def add_favorite_partner(
-    partner_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+async def add_favorite_partner(
+    partner_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(auth.get_current_user)
 ):
-    partner = db.query(models.User).filter(models.User.id == partner_id).first()
+    try:
+        partner_obj = ObjectId(partner_id)
+    except:
+        raise HTTPException(status_code=404, detail="Partner not found")
+        
+    partner = await db.users.find_one({"_id": partner_obj})
     if not partner:
         raise HTTPException(status_code=404, detail="Partner not found")
         
-    if partner not in current_user.favorite_partners:
-        current_user.favorite_partners.append(partner)
-        db.commit()
+    favorites = current_user.get("favorite_partners", [])
+    if partner_id not in favorites:
+        await db.users.update_one(
+            {"_id": ObjectId(current_user["id"])},
+            {"$push": {"favorite_partners": partner_id}}
+        )
     return {"status": "success"}
 
 @router.delete("/me/favorites/{partner_id}")
-def remove_favorite_partner(
-    partner_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+async def remove_favorite_partner(
+    partner_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(auth.get_current_user)
 ):
-    partner = db.query(models.User).filter(models.User.id == partner_id).first()
-    if partner and partner in current_user.favorite_partners:
-        current_user.favorite_partners.remove(partner)
-        db.commit()
+    favorites = current_user.get("favorite_partners", [])
+    if partner_id in favorites:
+        await db.users.update_one(
+            {"_id": ObjectId(current_user["id"])},
+            {"$pull": {"favorite_partners": partner_id}}
+        )
     return {"status": "success"}
 
 @router.get("/me/favorites", response_model=List[schemas.UserResponse])
-def get_favorite_partners(
-    current_user: models.User = Depends(auth.get_current_user)
+async def get_favorite_partners(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(auth.get_current_user)
 ):
-    return current_user.favorite_partners
+    favorites = current_user.get("favorite_partners", [])
+    partners = []
+    for fav_id in favorites:
+        try:
+            partner = await db.users.find_one({"_id": ObjectId(fav_id)})
+            if partner:
+                partner["id"] = str(partner["_id"])
+                partners.append(partner)
+        except:
+            pass
+    return partners

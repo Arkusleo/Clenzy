@@ -62,7 +62,7 @@ class JobServiceClient {
     required double longitude,
     required String address,
     required String description,
-    int? providerId,
+    String? providerId,
   }) async {
     final headers = await _getAuthHeaders();
 

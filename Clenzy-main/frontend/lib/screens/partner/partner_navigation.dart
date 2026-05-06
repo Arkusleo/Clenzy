@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
+import '../../services/user_service.dart';
 import '../../models/partner_profile_data.dart';
 import 'partner_dashboard_screen.dart';
 import 'partner_jobs_screen.dart';
@@ -121,12 +122,34 @@ class _PartnerProfileTab extends StatefulWidget {
 
 class _PartnerProfileTabState extends State<_PartnerProfileTab> {
   final AuthService _authService = AuthService();
+  late final UserService _userService;
   XFile? _profileImage;
   final ImagePicker _picker = ImagePicker();
+  String _actualName = 'Worker';
+
+  @override
+  void initState() {
+    super.initState();
+    _userService = UserService(_authService);
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    try {
+      final profile = await _userService.getUserProfile();
+      if (mounted) {
+        setState(() {
+          _actualName = profile['full_name'] ?? _userNameFallback;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch profile: $e');
+    }
+  }
 
   User? get _currentUser => _authService.currentUser;
 
-  String get _userName {
+  String get _userNameFallback {
     if (_currentUser?.email != null) {
       return _currentUser!.email.split('@').first;
     }
@@ -321,7 +344,7 @@ class _PartnerProfileTabState extends State<_PartnerProfileTab> {
             const SizedBox(height: 16),
             // Name - actual user name
             Text(
-              _userName,
+              _actualName,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -393,7 +416,7 @@ class _PartnerProfileTabState extends State<_PartnerProfileTab> {
                               const WorkerProfessionalDetailsScreen(),
                         ),
                       );
-                      setState(() {});
+                      _fetchProfile(); // Re-fetch name after edit
                     },
                   ),
                   _buildDivider(),
@@ -566,7 +589,7 @@ class _PartnerProfileTabState extends State<_PartnerProfileTab> {
       color: const Color(0xFF3366FF).withAlpha(51),
       child: Center(
         child: Text(
-          _userName.isNotEmpty ? _userName[0].toUpperCase() : 'W',
+          _actualName.isNotEmpty ? _actualName[0].toUpperCase() : 'W',
           style: const TextStyle(
             fontSize: 44,
             fontWeight: FontWeight.bold,

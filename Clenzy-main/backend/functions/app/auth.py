@@ -24,17 +24,17 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# Dependency snippet for verifying token could be here
+# Dependency snippet for verifying token
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from .database import get_db
-from sqlalchemy.orm import Session
-from . import models, schemas
+from .database import get_database
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from . import schemas
 import jwt
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/users/login")
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncIOMotorDatabase = Depends(get_database)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -49,13 +49,14 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     except jwt.PyJWTError:
         raise credentials_exception
         
-    user = db.query(models.User).filter(models.User.email == token_data.email).first()
+    user = await db.users.find_one({"email": token_data.email})
     if user is None:
         raise credentials_exception
+    user["id"] = str(user["_id"])
     return user
 
-def get_current_admin(current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
+async def get_current_admin(current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The user doesn't have enough privileges"

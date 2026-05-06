@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/partner_profile_data.dart';
+import '../../services/user_service.dart';
+import '../../services/auth_service.dart';
 
 class WorkerProfessionalDetailsScreen extends StatefulWidget {
   const WorkerProfessionalDetailsScreen({super.key});
@@ -21,13 +23,30 @@ class _WorkerProfessionalDetailsScreenState
   final _bioController = TextEditingController();
 
   bool _isLoading = false;
+  late final UserService _userService;
 
   @override
   void initState() {
     super.initState();
+    _userService = UserService(AuthService());
+    _fetchProfile();
+
     final data = PartnerProfileData.instance;
     _bioController.text = data.bio;
     _skillsController.text = data.allServices.join(', ');
+  }
+
+  Future<void> _fetchProfile() async {
+    try {
+      final profile = await _userService.getUserProfile();
+      if (mounted) {
+        setState(() {
+          _nameController.text = profile['full_name'] ?? '';
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching profile: $e');
+    }
   }
 
   @override
@@ -46,6 +65,17 @@ class _WorkerProfessionalDetailsScreenState
 
       // Simulate API call
       await Future.delayed(const Duration(seconds: 1));
+
+      try {
+        await _userService.updateUserProfile(fullName: _nameController.text.trim());
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update name: $e'), backgroundColor: Colors.red),
+        );
+        return;
+      }
 
       final data = PartnerProfileData.instance;
       data.bio = _bioController.text.trim();

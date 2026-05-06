@@ -2,11 +2,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import user, worker, admin, booking, ws, wallet, payment
-from app.database import engine
-from app.models import Base
-
-# Create database tables
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Clenzy API",

@@ -28,7 +28,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
 
   final List<Map<String, dynamic>> _providers = [
     {
-      'id': 1,
+      'id': '1',
       'name': "John's Pro Plumbing",
       'type': 'individual',
       'rating': 4.9,
@@ -39,7 +39,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
       'imageUrl': 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150',
     },
     {
-      'id': 2,
+      'id': '2',
       'name': 'Rapid Response',
       'type': 'agency',
       'rating': 4.8,
@@ -50,7 +50,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
       'imageUrl': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
     },
     {
-      'id': 3,
+      'id': '3',
       'name': 'Elite Pipe Fixers',
       'type': 'agency',
       'rating': 5.0,

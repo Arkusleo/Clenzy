@@ -3,12 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-// Adjust this depending on emulator or physical device testing
-// Android emulator uses 10.0.2.2. Web/iOS uses 127.0.0.1
-const String apiUrl = 'http://127.0.0.1:8000/api';
+import '../config/api_config.dart';
+
+final String apiUrl = '${ApiConfig.baseUrl}/api';
 
 class User {
-  final int id;
+  final String id;
   final String email;
   final String role;
   final bool isProfileComplete;
@@ -38,7 +38,7 @@ class AuthService extends ChangeNotifier {
 
     if (token != null && userId != null) {
       _currentUser = User(
-        id: int.parse(userId),
+        id: userId,
         email: email ?? '',
         role: role ?? 'user',
         isProfileComplete: isProfileComplete == 'true',
@@ -58,9 +58,11 @@ class AuthService extends ChangeNotifier {
     int? experience,
     List<String>? skills,
   }) async {
+    print("API CALL STARTED - SIGNUP");
     try {
+      print("URL: ${ApiConfig.baseUrl}/api/users/signup");
       final response = await http.post(
-        Uri.parse('$apiUrl/users/signup'),
+        Uri.parse('${ApiConfig.baseUrl}/api/users/signup'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -73,6 +75,8 @@ class AuthService extends ChangeNotifier {
           if (skills != null) 'skills': skills,
         }),
       );
+      print("STATUS: ${response.statusCode}");
+      print("RESPONSE BODY: ${response.body}");
 
       if (response.statusCode != 200) {
         throw jsonDecode(response.body)['detail'] ?? 'Signup failed';
@@ -90,12 +94,16 @@ class AuthService extends ChangeNotifier {
     required String email,
     required String password,
   }) async {
+    print("API CALL STARTED - LOGIN");
     try {
+      print("URL: ${ApiConfig.baseUrl}/api/users/login");
       final response = await http.post(
-        Uri.parse('$apiUrl/users/login'),
+        Uri.parse('${ApiConfig.baseUrl}/api/users/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
+      print("STATUS: ${response.statusCode}");
+      print("RESPONSE BODY: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -110,7 +118,7 @@ class AuthService extends ChangeNotifier {
         );
 
         _currentUser = User(
-          id: data['user_id'],
+          id: data['user_id'].toString(),
           email: email,
           role: data['role'],
           isProfileComplete: data['is_profile_complete'] ?? false,
@@ -148,7 +156,7 @@ class AuthService extends ChangeNotifier {
       if (token == null) throw 'Not authenticated';
 
       final response = await http.post(
-        Uri.parse('$apiUrl/users/me/complete_profile'),
+        Uri.parse('${ApiConfig.baseUrl}/api/users/me/complete_profile'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
